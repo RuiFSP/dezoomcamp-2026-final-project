@@ -13,6 +13,13 @@ provider "google" {
   region  = var.region
 }
 
+# Get current GCP project data for billing budget
+data "google_client_config" "current" {}
+
+data "google_project" "current" {
+  project_id = var.project_id
+}
+
 # GCS bucket for raw data (data lake)
 resource "google_storage_bucket" "raw_data" {
   name          = var.bucket_name
@@ -131,4 +138,35 @@ resource "google_cloud_run_v2_service_iam_member" "public_access" {
   name     = google_cloud_run_v2_service.dashboard.name
   role     = "roles/run.invoker"
   member   = "allUsers"
+}
+
+# Monthly budget alert for Cloud Run spending
+resource "google_billing_budget" "cloud_run" {
+  billing_account = var.billing_account_id
+  display_name    = "GitHub Analytics Cloud Run - Monthly Budget"
+
+  budget_filter {
+    projects = ["projects/${data.google_project.current.number}"]
+    services = ["services/95FF-2EF5-5EA1"]  # Cloud Run
+  }
+
+  amount {
+    specified_amount {
+      currency_code = "EUR"
+      units         = tostring(floor(var.budget_amount_eur))
+      nanos         = tostring((var.budget_amount_eur % 1) * 1000000000)
+    }
+  }
+
+  threshold_rules {
+    threshold_percent = 50
+  }
+
+  threshold_rules {
+    threshold_percent = 90
+  }
+
+  threshold_rules {
+    threshold_percent = 100
+  }
 }

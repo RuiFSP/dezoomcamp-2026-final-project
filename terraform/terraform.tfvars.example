@@ -3,14 +3,17 @@
 # Instructions:
 # 1. Copy this file to terraform.tfvars
 # 2. Update the values for your GCP project
-# 3. Run: terraform init
-# 4. Run: terraform plan
-# 5. Run: terraform apply
+# 3. Get your billing account ID from: https://console.cloud.google.com/billing/settings
+# 4. Run: terraform init
+# 5. Run: terraform plan
+# 6. Run: terraform apply
 
-project_id        = "gh-dezoomcamp"
-region            = "europe-west1"
-bucket_name       = "gh-dezoomcamp-raw-events"
-bq_dataset_id     = "gh_analytics"
-environment       = "prod"
-app_service_name  = "gh-analytics-streamlit"
-app_image         = "gcr.io/gh-dezoomcamp/gh-analytics-streamlit:latest"
+project_id         = "gh-dezoomcamp"
+region             = "europe-west1"
+bucket_name        = "gh-dezoomcamp-raw-events"
+bq_dataset_id      = "gh_analytics"
+environment        = "prod"
+app_service_name   = "gh-analytics-streamlit"
+app_image          = "gcr.io/gh-dezoomcamp/gh-analytics-streamlit:latest"
+billing_account_id = "012345-ABCDEF-G9H2I3"  # Replace with your billing account ID
+budget_amount_eur  = 5

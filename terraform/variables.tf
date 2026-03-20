@@ -57,3 +57,22 @@ variable "app_image" {
   type        = string
   default     = "gcr.io/gh-dezoomcamp/gh-analytics-streamlit:latest"
 }
+
+variable "billing_account_id" {
+  description = "GCP Billing Account ID for budget alerts (format: 012345-ABCDEF-G9H2I3). Find at: https://console.cloud.google.com/billing/settings"
+  type        = string
+  validation {
+    condition     = length(var.billing_account_id) > 0
+    error_message = "billing_account_id must not be empty. Find it in GCP Console > Billing > Settings."
+  }
+}
+
+variable "budget_amount_eur" {
+  description = "Monthly budget limit in EUR for Cloud Run spending"
+  type        = number
+  default     = 5
+  validation {
+    condition     = var.budget_amount_eur > 0
+    error_message = "budget_amount_eur must be greater than 0."
+  }
+}
