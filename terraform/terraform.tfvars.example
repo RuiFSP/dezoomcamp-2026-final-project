@@ -4,9 +4,13 @@
 # 1. Copy this file to terraform.tfvars
 # 2. Update the values for your GCP project
 # 3. Get your billing account ID from: https://console.cloud.google.com/billing/settings
-# 4. Run: terraform init
-# 5. Run: terraform plan
-# 6. Run: terraform apply
+# 4. Enable the Billing Budgets API if you plan to manage budgets via Terraform:
+#    gcloud services enable billingbudgets.googleapis.com --project=<your-project-id>
+# 5. Ensure the identity running Terraform has billing-account-level budget permissions.
+#    Project-level permissions are not sufficient for google_billing_budget.
+# 6. Run: terraform init
+# 7. Run: terraform plan
+# 8. Run: terraform apply
 
 project_id         = "gh-dezoomcamp"
 region             = "europe-west1"
@@ -15,5 +19,9 @@ bq_dataset_id      = "gh_analytics"
 environment        = "prod"
 app_service_name   = "gh-analytics-streamlit"
 app_image          = "gcr.io/gh-dezoomcamp/gh-analytics-streamlit:latest"
-billing_account_id = "012345-ABCDEF-G9H2I3"  # Replace with your billing account ID
+billing_account_id = "REPLACE_WITH_YOUR_BILLING_ACCOUNT_ID"  # Example: 012345-ABCDEF-GHIJKL
 budget_amount_eur  = 5
+
+# Note: creating google_billing_budget requires elevated permissions on the billing account
+# itself, not just on the GCP project. If apply fails with a 403 error, create the budget
+# manually in GCP Billing or ask a billing admin to grant budget-management access.

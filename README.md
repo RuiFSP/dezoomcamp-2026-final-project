@@ -320,6 +320,10 @@ make app-url
 
 The app reads the mart tables from `gh_analytics` by default.
 
+If you manage Cloud Run spend limits via Terraform, note that the `google_billing_budget`
+resource requires billing-account-level permissions and the Billing Budgets API enabled.
+Project-level Terraform access alone is not enough.
+
 ## CI/CD Pipeline
 
 GitHub Actions automatically runs tests on every push and pull request to `main` and `develop` branches. Check status in the [Actions tab](../../actions).
@@ -370,3 +374,14 @@ Safe-to-commit examples are included in:
 - The BigQuery raw table reload is idempotent per date.
 - Streamlit is the only dashboard intended for the final submission.
 - The Cloud Run deployment can be destroyed via `terraform destroy` to avoid ongoing costs. Contact the author for a live demo if needed.
+
+## Post-Submission Checklist
+
+- Verify `git status` is clean before any post-submission cleanup.
+- Confirm `.env`, `.bruin.yml`, `terraform.tfvars`, and any service-account JSON files are still untracked.
+- If reviewer access is no longer needed, remove or restrict public Cloud Run access.
+- If reviewer access is no longer needed, run `terraform -chdir=terraform destroy` to avoid ongoing Cloud Run, BigQuery, and GCS costs.
+- If you keep the stack running, create a manual billing budget in GCP Billing when Terraform cannot create `google_billing_budget` due to billing-account permissions.
+- Delete old container images and unused build artifacts if you want tighter cost control beyond Terraform-managed resources.
+- Revoke or rotate any local service-account keys used during setup.
+- Keep the final submission commit/tag intact so cleanup changes do not alter the reviewed snapshot.
