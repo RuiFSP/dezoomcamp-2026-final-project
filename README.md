@@ -45,32 +45,54 @@ The pipeline ingests hourly NDJSON archives from gharchive.org, lands them in a 
 ## Architecture
 
 ```mermaid
-flowchart TD
-    GHA["gharchive.org\nhourly NDJSON .gz"]
+flowchart LR
+    SRC["gharchive.org\nHourly NDJSON (.gz)"]
 
-    subgraph GCS["GCS Data Lake"]
-        RAW_GCS["raw/github_events/YYYY-MM-DD/hours/HH.ndjson"]
+    subgraph ORCH["Pipeline & Infrastructure"]
+        BRUIN["Bruin CLI\nIngestion + SQL + Data Checks"]
+        TF["Terraform\nGCP Infrastructure as Code"]
+        CI["GitHub Actions\nTests + Quality Gates"]
     end
 
-    subgraph BQ["BigQuery"]
+    subgraph LAKE["Data Lake"]
+        GCS["GCS Bucket\nraw/github_events/YYYY-MM-DD/hours/HH.ndjson"]
+    end
+
+    subgraph WH["BigQuery Warehouse"]
         RAW["raw_github_events"]
-        STG["stg_github_events"]
+        STG["stg_github_events\n(partitioned + clustered)"]
         M1["events_by_type"]
         M2["events_by_hour"]
         M3["top_repos"]
         M4["language_trends"]
     end
 
-    APP["Streamlit Dashboard"]
+    subgraph SERVE["Serving Layer"]
+        APP["Streamlit App\n(Cloud Run)"]
+    end
 
-    GHA -->|Bruin ingestion| RAW_GCS
-    RAW_GCS -->|Bruin load| RAW
-    RAW -->|SQL staging| STG
-    STG --> M1
-    STG --> M2
-    STG --> M3
-    STG --> M4
-    M1 & M2 & M3 & M4 --> APP
+    USER["End Users / Reviewers"]
+
+    TF -->|provisions| GCS
+    TF -->|provisions| WH
+    TF -->|provisions| APP
+
+    SRC -->|hourly fetch| BRUIN
+    BRUIN -->|lands raw files| GCS
+    BRUIN -->|loads raw data| RAW
+    BRUIN -->|staging SQL| STG
+    BRUIN -->|mart SQL| M1
+    BRUIN -->|mart SQL| M2
+    BRUIN -->|mart SQL| M3
+    BRUIN -->|mart SQL| M4
+
+    M1 --> APP
+    M2 --> APP
+    M3 --> APP
+    M4 --> APP
+
+    USER -->|HTTPS| APP
+    CI -->|validates repository changes| BRUIN
 ```
 
 ## Stack
