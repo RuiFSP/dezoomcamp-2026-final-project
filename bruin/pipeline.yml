@@ -9,4 +9,3 @@ variables:
   current_dataset:
     type: string
     default: "dev_gh_analytics"
-

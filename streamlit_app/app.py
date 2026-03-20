@@ -24,7 +24,9 @@ sys.path.insert(0, str(_ROOT_DIR))
 # Configuration
 GCP_PROJECT = os.environ.get("GCP_PROJECT_ID", "gh-dezoomcamp")
 BQ_DATASET = os.environ.get("BQ_DATASET", "gh_analytics")
-ENABLE_PIPELINE_TRIGGER = os.environ.get("ENABLE_PIPELINE_TRIGGER", "false").lower() == "true"
+ENABLE_PIPELINE_TRIGGER = (
+    os.environ.get("ENABLE_PIPELINE_TRIGGER", "false").lower() == "true"
+)
 
 # Page config
 st.set_page_config(
@@ -237,8 +239,12 @@ with st.sidebar:
         min_date = date(2026, 3, 15)
         max_date = date.today()
 
-    start_date = st.date_input("From", value=min_date, min_value=min_date, max_value=max_date)
-    end_date = st.date_input("To", value=max_date, min_value=min_date, max_value=max_date)
+    start_date = st.date_input(
+        "From", value=min_date, min_value=min_date, max_value=max_date
+    )
+    end_date = st.date_input(
+        "To", value=max_date, min_value=min_date, max_value=max_date
+    )
 
     if start_date > end_date:
         st.error("Start must be <= End")
@@ -328,9 +334,8 @@ with tab_overview:
     with col_r:
         _section("Daily Event Volume")
         if not df_type.empty:
-            daily = (
-                df_type.groupby("event_date", as_index=False)
-                .agg(event_count=("event_count", "sum"))
+            daily = df_type.groupby("event_date", as_index=False).agg(
+                event_count=("event_count", "sum")
             )
             daily["event_date"] = daily["event_date"].astype(str)
             fig = px.bar(
@@ -348,7 +353,10 @@ with tab_overview:
         df_h = df_hour.copy()
         df_h["event_date"] = df_h["event_date"].astype(str)
         pivot = df_h.pivot_table(
-            index="event_date", columns="hour_of_day", values="event_count", fill_value=0
+            index="event_date",
+            columns="hour_of_day",
+            values="event_count",
+            fill_value=0,
         )
         fig = px.imshow(
             pivot,
@@ -361,9 +369,8 @@ with tab_overview:
 
     _section("Hourly Pattern (aggregated across all dates)")
     if not df_hour.empty:
-        h_agg = (
-            df_hour.groupby("hour_of_day", as_index=False)
-            .agg(event_count=("event_count", "sum"))
+        h_agg = df_hour.groupby("hour_of_day", as_index=False).agg(
+            event_count=("event_count", "sum")
         )
         fig = px.bar(
             h_agg,
@@ -380,14 +387,20 @@ with tab_overview:
     if not df_type.empty:
         df_t = df_type.copy()
         df_t["event_date"] = df_t["event_date"].astype(str)
-        top_types = df_t.groupby("event_type")["event_count"].sum().nlargest(8).index.tolist()
+        top_types = (
+            df_t.groupby("event_type")["event_count"].sum().nlargest(8).index.tolist()
+        )
         df_t_top = df_t[df_t["event_type"].isin(top_types)]
         fig = px.line(
             df_t_top,
             x="event_date",
             y="event_count",
             color="event_type",
-            labels={"event_count": "Events", "event_date": "Date", "event_type": "Type"},
+            labels={
+                "event_count": "Events",
+                "event_date": "Date",
+                "event_type": "Type",
+            },
             markers=True,
             color_discrete_sequence=_COLOR_SEQ,
             template=_TEMPLATE,
@@ -398,14 +411,20 @@ with tab_overview:
     if not df_type.empty:
         mix = df_type.copy()
         mix["event_date"] = mix["event_date"].astype(str)
-        top_mix_types = mix.groupby("event_type")["event_count"].sum().nlargest(6).index.tolist()
+        top_mix_types = (
+            mix.groupby("event_type")["event_count"].sum().nlargest(6).index.tolist()
+        )
         mix = mix[mix["event_type"].isin(top_mix_types)]
         fig = px.bar(
             mix,
             x="event_date",
             y="event_count",
             color="event_type",
-            labels={"event_date": "Date", "event_count": "Events", "event_type": "Type"},
+            labels={
+                "event_date": "Date",
+                "event_count": "Events",
+                "event_type": "Type",
+            },
             color_discrete_sequence=_COLOR_SEQ,
             template=_TEMPLATE,
         )
@@ -474,7 +493,12 @@ with tab_repos:
             ("issues", "#ff7b72", "🐛 Issues"),
         ]:
             fig.add_trace(
-                go.Bar(name=label, x=top10["repo_name"], y=top10[metric], marker_color=color)
+                go.Bar(
+                    name=label,
+                    x=top10["repo_name"],
+                    y=top10[metric],
+                    marker_color=color,
+                )
             )
         fig.update_layout(barmode="stack", template=_TEMPLATE, xaxis_tickangle=-30)
         st.plotly_chart(_layout(fig, 400), width="stretch")
@@ -509,7 +533,9 @@ with tab_repos:
             marker_line_width=2,
             marker_line_color="#ffffff",
         )
-        fig.update_layout(margin=dict(t=30, l=0, r=0, b=0), coloraxis_colorbar_title="Contributors")
+        fig.update_layout(
+            margin=dict(t=30, l=0, r=0, b=0), coloraxis_colorbar_title="Contributors"
+        )
         st.plotly_chart(_layout(fig, 500), width="stretch")
 
 with tab_lang:
@@ -568,7 +594,11 @@ with tab_lang:
             x="event_date",
             y="push_count",
             color="repo_language",
-            labels={"push_count": "Pushes", "event_date": "Date", "repo_language": "Language"},
+            labels={
+                "push_count": "Pushes",
+                "event_date": "Date",
+                "repo_language": "Language",
+            },
             markers=True,
             color_discrete_sequence=_COLOR_SEQ,
             template=_TEMPLATE,
@@ -612,14 +642,21 @@ if tab_admin is not None:
 
         with col_form:
             ingest_date = st.date_input(
-                "Date to ingest", value=date.today(), min_value=date(2024, 1, 1), max_value=date.today()
+                "Date to ingest",
+                value=date.today(),
+                min_value=date(2024, 1, 1),
+                max_value=date.today(),
             )
             ingest_env = st.selectbox("Environment", ["prod", "dev", "staging"])
             start_hour = st.slider("Start hour (UTC)", 0, 23, 0)
             max_hours = st.slider("Max hours to fetch", 1, 24, 6)
             force = st.checkbox("Force re-ingest (overwrite existing)", value=True)
 
-        dataset_map = {"prod": "gh_analytics", "dev": "dev_gh_analytics", "staging": "stg_gh_analytics"}
+        dataset_map = {
+            "prod": "gh_analytics",
+            "dev": "dev_gh_analytics",
+            "staging": "stg_gh_analytics",
+        }
         current_dataset = dataset_map[ingest_env]
 
         cmd_parts = [
@@ -680,8 +717,12 @@ if tab_admin is not None:
                     process.wait()
 
                 if process.returncode == 0:
-                    status_widget.update(label="✅ Pipeline completed!", state="complete")
-                    st.success("All assets executed and quality checks passed. Refreshing data…")
+                    status_widget.update(
+                        label="✅ Pipeline completed!", state="complete"
+                    )
+                    st.success(
+                        "All assets executed and quality checks passed. Refreshing data…"
+                    )
                     st.cache_data.clear()
                     st.rerun()
                 else:
@@ -689,6 +730,8 @@ if tab_admin is not None:
                     st.error(f"Exit code {process.returncode}. See output above.")
 
             except FileNotFoundError:
-                st.error("`bruin` CLI not found. Install: `curl -LsSf https://getbruin.com/install/cli | sh`")
+                st.error(
+                    "`bruin` CLI not found. Install: `curl -LsSf https://getbruin.com/install/cli | sh`"
+                )
             except Exception as exc:
                 st.error(f"Unexpected error: {exc}")

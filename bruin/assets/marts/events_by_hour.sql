@@ -38,4 +38,3 @@ SELECT
     COUNT(DISTINCT actor_login)     AS unique_actors
 FROM `{{ var.current_dataset }}.stg_github_events`
 GROUP BY 1, 2
-

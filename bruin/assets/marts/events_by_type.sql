@@ -44,4 +44,3 @@ SELECT
     COUNT(DISTINCT repo_name)   AS unique_repos
 FROM `{{ var.current_dataset }}.stg_github_events`
 GROUP BY 1, 2
-

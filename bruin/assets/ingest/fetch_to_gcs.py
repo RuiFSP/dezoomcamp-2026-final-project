@@ -11,7 +11,11 @@ from src.ingest_github_events import fetch_to_gcs
 
 # Bruin injects BRUIN_START_DATE as "YYYY-MM-DDTHH:MM:SSZ"; fall back to yesterday UTC
 _raw = os.environ.get("BRUIN_START_DATE", "")
-date = _raw[:10] if _raw else (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+date = (
+    _raw[:10]
+    if _raw
+    else (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+)
 gcs_uri = fetch_to_gcs(date)
 
 if gcs_uri is None:

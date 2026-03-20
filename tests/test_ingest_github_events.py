@@ -1,7 +1,6 @@
 """Unit tests for the GitHub Events ingestion module."""
 
-import json
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -10,20 +9,20 @@ import pytest
 from src.ingest_github_events import (
     GCS_UPLOAD_CHUNK_SIZE_BYTES,
     GCS_UPLOAD_TIMEOUT_SECONDS,
+    fetch_day,
     fetch_github_archive,
     fetch_to_gcs,
-    fetch_day,
     ingest_github_events,
     load_to_bigquery,
-    resolve_hour_window,
     resolve_date,
+    resolve_hour_window,
     upload_to_gcs,
 )
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # resolve_date
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def test_resolve_date_explicit():
     assert resolve_date("2026-03-20") == "2026-03-20"
@@ -43,6 +42,7 @@ def test_resolve_date_invalid_raises():
 # ─────────────────────────────────────────────────────────────────────────────
 # fetch_github_archive
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def test_fetch_github_archive_not_found(tmp_path):
     """Returns False when GitHub Archive returns 404."""
@@ -83,6 +83,7 @@ def test_fetch_github_archive_success(tmp_path):
 # ingest_github_events
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def test_ingest_skips_load_when_no_records(tmp_path):
     """When no records are fetched, skips GCS upload and BQ load."""
     with patch("src.ingest_github_events.fetch_to_gcs", return_value=None):
@@ -96,8 +97,12 @@ def test_ingest_skips_load_when_no_records(tmp_path):
 def test_ingest_full_pipeline(tmp_path):
     """Full pipeline runs fetch → upload → load when records present."""
     with (
-        patch("src.ingest_github_events.fetch_to_gcs", return_value="gs://bucket/path") as mock_fetch,
-        patch("src.ingest_github_events.load_to_bigquery", return_value=42) as mock_load,
+        patch(
+            "src.ingest_github_events.fetch_to_gcs", return_value="gs://bucket/path"
+        ) as mock_fetch,
+        patch(
+            "src.ingest_github_events.load_to_bigquery", return_value=42
+        ) as mock_load,
     ):
         result = ingest_github_events("2026-03-20")
 
@@ -117,7 +122,10 @@ def test_fetch_to_gcs_reuses_existing_object():
     ):
         gcs_uri = fetch_to_gcs("2026-03-20")
 
-    assert gcs_uri == "gs://gh-dezoomcamp-raw-events/raw/github_events/2026-03-20/hours/*.ndjson"
+    assert (
+        gcs_uri
+        == "gs://gh-dezoomcamp-raw-events/raw/github_events/2026-03-20/hours/*.ndjson"
+    )
     mock_fetch_hour.assert_not_called()
     mock_upload.assert_not_called()
 
@@ -140,7 +148,9 @@ def test_resolve_hour_window_invalid_raises():
 def test_fetch_day_respects_hour_window(tmp_path):
     out = tmp_path / "combined.ndjson"
 
-    with patch("src.ingest_github_events.fetch_github_archive", return_value=False) as mock_fetch:
+    with patch(
+        "src.ingest_github_events.fetch_github_archive", return_value=False
+    ) as mock_fetch:
         records = fetch_day("2026-03-20", str(out), start_hour=5, max_hours=2)
 
     assert records == 0

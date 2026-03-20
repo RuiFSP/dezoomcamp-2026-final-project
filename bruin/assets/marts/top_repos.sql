@@ -45,4 +45,3 @@ SELECT
 FROM `{{ var.current_dataset }}.stg_github_events`
 WHERE repo_name IS NOT NULL
 GROUP BY 1, 2
-

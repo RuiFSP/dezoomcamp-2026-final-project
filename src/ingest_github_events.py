@@ -72,8 +72,16 @@ def resolve_hour_window(
       - GH_ARCHIVE_START_HOUR (default: 0)
       - GH_ARCHIVE_MAX_HOURS (default: 24)
     """
-    start = start_hour if start_hour is not None else int(os.getenv("GH_ARCHIVE_START_HOUR", "0"))
-    count = max_hours if max_hours is not None else int(os.getenv("GH_ARCHIVE_MAX_HOURS", "24"))
+    start = (
+        start_hour
+        if start_hour is not None
+        else int(os.getenv("GH_ARCHIVE_START_HOUR", "0"))
+    )
+    count = (
+        max_hours
+        if max_hours is not None
+        else int(os.getenv("GH_ARCHIVE_MAX_HOURS", "24"))
+    )
 
     if start < 0 or start > 23:
         raise ValueError(f"GH_ARCHIVE_START_HOUR must be between 0 and 23, got {start}")
@@ -90,6 +98,7 @@ def resolve_hour_window(
 # ─────────────────────────────────────────────────────────────────────────────
 # Data fetching
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def fetch_github_archive(date: str, hour: int, output_path: str) -> bool:
     """Download one hour of GitHub Archive data to a local file.
@@ -234,7 +243,11 @@ def upload_to_gcs(local_path: str, date: str, hour: int | None = None) -> str:
     """
     client = storage.Client(project=PROJECT_ID)
     bucket = client.bucket(BUCKET_NAME)
-    blob_name = gcs_hour_blob_name(date, hour) if hour is not None else f"raw/github_events/{date}/events.ndjson"
+    blob_name = (
+        gcs_hour_blob_name(date, hour)
+        if hour is not None
+        else f"raw/github_events/{date}/events.ndjson"
+    )
     blob = bucket.blob(blob_name)
     blob.chunk_size = GCS_UPLOAD_CHUNK_SIZE_BYTES
     retry = Retry(deadline=GCS_UPLOAD_RETRY_DEADLINE_SECONDS)
@@ -262,6 +275,7 @@ def upload_to_gcs(local_path: str, date: str, hour: int | None = None) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 # BigQuery
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def ensure_table_exists(client: bigquery.Client) -> None:
     """Create the raw_github_events table if it does not exist.
@@ -336,7 +350,9 @@ def load_to_bigquery(gcs_uri: str, date: str) -> int:
 
     table = client.get_table(table_ref)
     rows_loaded = load_job.output_rows
-    logger.info(f"Loaded {rows_loaded:,} rows → {table_ref} (total: {table.num_rows:,})")
+    logger.info(
+        f"Loaded {rows_loaded:,} rows → {table_ref} (total: {table.num_rows:,})"
+    )
     return rows_loaded
 
 
