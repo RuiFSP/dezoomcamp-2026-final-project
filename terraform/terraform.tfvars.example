@@ -1,0 +1,14 @@
+# Terraform Configuration for GitHub Activity Analytics Dashboard
+# 
+# Instructions:
+# 1. Copy this file to terraform.tfvars
+# 2. Update the values for your GCP project
+# 3. Run: terraform init
+# 4. Run: terraform plan
+# 5. Run: terraform apply
+
+project_id    = "gh-dezoomcamp"
+region        = "europe-west1"
+bucket_name   = "gh-dezoomcamp-raw-events"
+bq_dataset_id = "gh_analytics"
+environment   = "prod"

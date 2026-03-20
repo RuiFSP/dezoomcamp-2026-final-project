@@ -1,0 +1,47 @@
+variable "project_id" {
+  description = "GCP Project ID"
+  type        = string
+  validation {
+    condition     = length(var.project_id) > 0
+    error_message = "project_id must not be empty."
+  }
+}
+
+variable "region" {
+  description = "GCP region for resources"
+  type        = string
+  default     = "europe-west1"
+  validation {
+    condition     = can(regex("^[a-z0-9-]+$", var.region)) && length(var.region) > 0
+    error_message = "region must be a valid GCP region (e.g., europe-west1, us-central1)."
+  }
+}
+
+variable "bucket_name" {
+  description = "GCS bucket name for raw GitHub event data (must be globally unique)"
+  type        = string
+  validation {
+    condition     = can(regex("^[a-z0-9-]{3,63}$", var.bucket_name))
+    error_message = "Bucket name must be 3-63 chars, lowercase letters/numbers/hyphens only."
+  }
+}
+
+variable "bq_dataset_id" {
+  description = "BigQuery dataset ID for production environment"
+  type        = string
+  default     = "gh_analytics"
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9_]+$", var.bq_dataset_id))
+    error_message = "Dataset ID must contain only letters, numbers, and underscores."
+  }
+}
+
+variable "environment" {
+  description = "Environment name (dev, stg, prod)"
+  type        = string
+  default     = "prod"
+  validation {
+    condition     = contains(["dev", "stg", "prod"], var.environment)
+    error_message = "environment must be dev, stg, or prod."
+  }
+}

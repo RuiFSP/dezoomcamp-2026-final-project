@@ -205,3 +205,23 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+.bruin.yml
+# Bruin credentials (contains GCP keys)
+.bruin.yml
+
+# Sensitive local configuration and credentials
+.env.*
+!.env.example
+*.tfvars
+*.tfvars.json
+gcp-key.json
+gcp-key*.json
+service-account*.json
+*.pem
+*.p12
+*.key
+
+logs/runs
+logs/*.log
+*.py[cod]

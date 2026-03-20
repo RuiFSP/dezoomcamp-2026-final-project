@@ -1,0 +1,12 @@
+name: github-analytics
+schedule: "@daily"
+start_date: "2025-01-01"
+
+default_connections:
+  google_cloud_platform: "bigquery-default"
+
+variables:
+  current_dataset:
+    type: string
+    default: "dev_gh_analytics"
+
