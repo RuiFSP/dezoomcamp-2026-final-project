@@ -85,6 +85,28 @@ terraform/
 tests/
 ```
 
+## Architectural Decisions
+
+### Why Bruin?
+
+This project uses **Bruin CLI** as the single orchestration and transformation tool for the entire data pipeline, replacing the need for separate tools like Airflow + dbt.
+
+**Rationale:**
+
+1. **Unified workflow** — Orchestration and SQL transformations in one tool eliminates context switching and reduces cognitive overhead
+2. **Version control friendly** — All pipeline logic lives in YAML (`pipeline.yml`) and SQL files, fully auditable via git
+3. **Built-in data quality** — Bruin's column checks (`not_null`, `unique`) provide immediate feedback on data integrity
+4. **Minimal dependencies** — Less infrastructure to manage and maintain vs. Airflow + dbt + metadata store
+5. **Fast iteration** — Single pipeline file vs. fragmented dbt projects and Airflow DAGs
+
+**Trade-offs:**
+
+- Smaller ecosystem than Airflow/dbt (fewer integrations documented)
+- Less commercial support than mature tools
+- Best suited for teams comfortable with YAML/SQL; visual UI support is limited
+
+For a learning project and single-use pipeline, Bruin strikes a balance between power and simplicity.
+
 ## Environments
 
 | Environment | BigQuery dataset |
