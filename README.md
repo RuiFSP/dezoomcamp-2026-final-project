@@ -2,6 +2,14 @@
 
 > DataTalks.Club DE Zoomcamp 2026 Final Project
 
+![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![GCP](https://img.shields.io/badge/Cloud-GCP-4285F4?logo=googlecloud&logoColor=white)
+![Terraform](https://img.shields.io/badge/IaC-Terraform-844FBA?logo=terraform&logoColor=white)
+![Bruin](https://img.shields.io/badge/Orchestration-Bruin-0F766E)
+![BigQuery](https://img.shields.io/badge/Warehouse-BigQuery-669DF6?logo=googlebigquery&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
+[![Tests](https://github.com/RuiFSP/dezoomcamp-2026-final-project/actions/workflows/test.yml/badge.svg)](https://github.com/RuiFSP/dezoomcamp-2026-final-project/actions/workflows/test.yml)
+
 ## Problem Description
 
 GitHub generates millions of public events every day — pushes, pull requests, issues, forks, stars — across thousands of repositories and contributors worldwide. This raw activity stream is publicly available via [gharchive.org](https://gharchive.org), but it is not pre-aggregated or directly queryable in a useful analytical form.
