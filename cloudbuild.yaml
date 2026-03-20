@@ -1,0 +1,12 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - -t
+      - $_IMAGE
+      - -f
+      - streamlit_app/Dockerfile
+      - .
+
+images:
+  - $_IMAGE

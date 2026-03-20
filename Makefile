@@ -110,7 +110,7 @@ app-docker-run:
 		$(APP_IMAGE)
 
 app-gcp-build:
-	gcloud builds submit --project=$(GCP_PROJECT_ID) --tag $(APP_IMAGE) .
+	gcloud builds submit --project=$(GCP_PROJECT_ID) --config cloudbuild.yaml --substitutions _IMAGE=$(APP_IMAGE) .
 
 app-deploy:
 	gcloud run deploy $(APP_SERVICE) \
