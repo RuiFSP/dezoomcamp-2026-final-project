@@ -2,9 +2,29 @@
 
 > DataTalks.Club DE Zoomcamp 2026 Final Project
 
-This project builds an end-to-end batch data pipeline for public GitHub activity data and serves the final analytics through a Streamlit dashboard.
+## Problem Description
 
-The dashboard is now fully Streamlit-based. Looker Studio is no longer part of the intended submission.
+GitHub generates millions of public events every day — pushes, pull requests, issues, forks, stars — across thousands of repositories and contributors worldwide. This raw activity stream is publicly available via [gharchive.org](https://gharchive.org), but it is not pre-aggregated or directly queryable in a useful analytical form.
+
+**This project builds an end-to-end batch data pipeline that answers:**
+
+- Which event types dominate GitHub activity on any given day or hour?
+- Which repositories attract the most contributors and drive the most events?
+- How does activity vary across the day (UTC), and what are the peak hours?
+- What is the daily mix of event types — is it push-heavy, or driven by issues and PRs?
+- Which programming language ecosystems (inferred from repo naming patterns) are most active?
+
+The pipeline ingests hourly NDJSON archives from gharchive.org, lands them in a GCS data lake, loads and stages them in BigQuery, then materialises four analytical marts consumed by a Streamlit dashboard.
+
+## Dashboard
+
+| Event Overview | Top Repositories |
+|---|---|
+| ![Event Overview](docs/screenshots/01_event_overview.png) | ![Top Repositories](docs/screenshots/02_top_repositories.png) |
+
+| Language Signals | |
+|---|---|
+| ![Language Signals](docs/screenshots/03_language_signals.png) | |
 
 ## Architecture
 
