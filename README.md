@@ -115,6 +115,21 @@ cp .env.example .env
 
 Fill in `.env` with your project-specific values.
 
+### 2.5. Set up pre-commit hooks (optional but recommended)
+
+Pre-commit hooks automatically format and lint your code before committing:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+The hooks will run on `git commit`. To manually run all hooks:
+
+```bash
+pre-commit run --all-files
+```
+
 ### 3. Bootstrap GCP and infrastructure
 
 The helper script is a convenience bootstrap for local development. Review the defaults in
@@ -168,6 +183,24 @@ make app-url
 ```
 
 The app reads the mart tables from `gh_analytics` by default.
+
+## CI/CD Pipeline
+
+GitHub Actions automatically runs tests on every push and pull request to `main` and `develop` branches. Check status in the [Actions tab](../../actions).
+
+**Local testing before push:**
+
+```bash
+make test
+```
+
+**Code quality checks:**
+
+Pre-commit hooks (if installed) will auto-format and lint code before commits. Run manually:
+
+```bash
+pre-commit run --all-files
+```
 
 ## Dashboard Scope
 
