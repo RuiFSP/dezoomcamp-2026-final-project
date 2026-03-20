@@ -26,7 +26,7 @@ The pipeline ingests hourly NDJSON archives from gharchive.org, lands them in a 
 
 ## Dashboard
 
-**Live app:** https://gh-analytics-streamlit-untavg4doq-ew.a.run.app
+The Streamlit application has been deployed to Cloud Run and is available for reviewer demonstration upon request. Screenshots below show the dashboard interface and deployment proof.
 
 | Event Overview | Top Repositories |
 |---|---|
@@ -369,3 +369,4 @@ Safe-to-commit examples are included in:
 - The raw ingestion uses hourly files in GCS to make retries and backfills resumable.
 - The BigQuery raw table reload is idempotent per date.
 - Streamlit is the only dashboard intended for the final submission.
+- The Cloud Run deployment can be destroyed via `terraform destroy` to avoid ongoing costs. Contact the author for a live demo if needed.
