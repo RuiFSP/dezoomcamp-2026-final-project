@@ -36,6 +36,12 @@ The pipeline ingests hourly NDJSON archives from gharchive.org, lands them in a 
 |---|---|
 | ![Language Signals](docs/screenshots/03_language_signals.png) | |
 
+## Cloud Proof
+
+| BigQuery Tables (warehouse proof) | Deployed Cloud Run Service |
+|---|---|
+| ![BigQuery Proof](docs/screenshots/04_google_big_query.png) | ![Cloud Run Proof](docs/screenshots/05_deployed_streamlit.png) |
+
 ## Architecture
 
 ```mermaid
