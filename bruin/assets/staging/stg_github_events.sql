@@ -1,6 +1,7 @@
 /* @bruin
 name: gh_analytics.stg_github_events
 type: bq.sql
+description: Cleaned and deduplicated GitHub events from raw layer, ready for analytics
 materialization:
     type: table
     partition_by: DATE(event_timestamp)

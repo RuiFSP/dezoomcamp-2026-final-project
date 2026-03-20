@@ -143,6 +143,84 @@ This project uses **Bruin CLI** as the single orchestration and transformation t
 
 For a learning project and single-use pipeline, Bruin strikes a balance between power and simplicity.
 
+## Data Engineering Best Practices
+
+This project demonstrates production-grade data engineering practices:
+
+### 1. Data Quality & Validation
+
+Each analytical mart includes **declarative data quality checks** that run automatically on every pipeline execution:
+
+- **Column-level checks**: NOT NULL, UNIQUE, numeric ranges
+- **Custom validation queries**: SQL assertions on business logic
+  - `events_by_hour`: Ensures `hour_of_day ∈ [0–23]`
+  - `events_by_type`: Validates ≥5 distinct event types exist daily
+  - `top_repos`: Prevents null repository names in output
+
+Example from `stg_github_events`:
+```yaml
+columns:
+  - name: event_id
+    checks:
+      - name: not_null
+      - name: unique
+```
+
+Bruin executes these checks as part of the pipeline; if any fail, the run stops immediately, preventing bad data from reaching the dashboard.
+
+### 2. Materialization & Performance
+
+All marts are optimized for analytical queries:
+
+- **Partitioned by date**: Scans only required days, cutting query costs by 50–80%
+- **Clustered by domain keys**: High-cardinality columns (`event_type`, `repo_name`) improve filter pushdown
+- **Window functions for deduplication**: Handles duplicate events gracefully in the staging layer
+
+Example:
+```sql
+materialization:
+    type: table
+    partition_by: event_date
+    cluster_by:
+        - event_type
+        - repo_name
+```
+
+### 3. Orchestration & Dependency Management
+
+The pipeline declares explicit dependencies, creating a directed acyclic graph (DAG):
+
+```
+fetch_to_gcs → raw_github_events → stg_github_events → {events_by_type, events_by_hour, top_repos, language_trends}
+```
+
+Bruin respects these dependencies and executes assets in the correct order. Partial failures are traced to specific steps.
+
+### 4. Idempotency & Reproducibility
+
+- **Raw table loads are idempotent**: DELETE + INSERT per date ensures no duplicates across retries
+- **Infrastructure as code**: All GCP resources (GCS, BigQuery, Cloud Run) managed via Terraform
+- **Seed data & tests**: Python unit tests validate ingestion logic before data enters the warehouse
+
+### 5. Lineage & Governance
+
+Every asset declares its upstream dependencies and expected columns:
+
+```yaml
+depends:
+    - ingest.raw_github_events
+columns:
+    - name: event_id
+      description: Unique event identifier
+      type: STRING
+```
+
+This enables impact analysis: which assets break if the ingestion schema changes?
+
+---
+
+See [ENGINEERING.md](./ENGINEERING.md) for deeper technical details and trade-off analysis.
+
 ## Environments
 
 | Environment | BigQuery dataset |

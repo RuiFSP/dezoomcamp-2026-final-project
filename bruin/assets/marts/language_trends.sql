@@ -1,6 +1,7 @@
 /* @bruin
 name: gh_analytics.language_trends
 type: bq.sql
+description: GitHub activity trends aggregated by programming language (inferred from repository name)
 materialization:
     type: table
     partition_by: event_date
@@ -11,18 +12,22 @@ depends:
 columns:
     - name: event_date
       type: DATE
+      description: Date of the event (UTC)
       checks:
           - name: not_null
     - name: repo_name
       type: STRING
+      description: Full repository name in format owner/repo
       checks:
           - name: not_null
     - name: push_count
       type: INTEGER
+      description: Number of PushEvents for this repository
       checks:
           - name: positive
     - name: contributors
       type: INTEGER
+      description: Distinct users who pushed to this repository
       checks:
           - name: positive
 @bruin */

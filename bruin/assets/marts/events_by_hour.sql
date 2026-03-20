@@ -1,6 +1,7 @@
 /* @bruin
 name: gh_analytics.events_by_hour
 type: bq.sql
+description: GitHub events aggregated by day and hour of day (UTC), with daily unique actor counts
 materialization:
     type: table
     partition_by: event_date
@@ -11,10 +12,12 @@ depends:
 columns:
     - name: event_date
       type: DATE
+      description: Date of the event (UTC)
       checks:
           - name: not_null
     - name: hour_of_day
       type: INTEGER
+      description: Hour of day in UTC (0-23)
       checks:
           - name: not_null
           - name: non_negative
@@ -22,6 +25,7 @@ columns:
             value: 23
     - name: event_count
       type: INTEGER
+      description: Number of GitHub events in this hour
       checks:
           - name: positive
 custom_checks:

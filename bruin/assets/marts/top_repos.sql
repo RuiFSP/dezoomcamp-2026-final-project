@@ -1,6 +1,7 @@
 /* @bruin
 name: gh_analytics.top_repos
 type: bq.sql
+description: GitHub repositories ranked by activity, including event types, stars, forks, and unique contributors
 materialization:
     type: table
     partition_by: event_date
@@ -11,18 +12,22 @@ depends:
 columns:
     - name: event_date
       type: DATE
+      description: Date of the event (UTC)
       checks:
           - name: not_null
     - name: repo_name
       type: STRING
+      description: Full repository name in format owner/repo
       checks:
           - name: not_null
     - name: total_events
       type: INTEGER
+      description: Total number of events for this repository
       checks:
           - name: positive
     - name: unique_contributors
       type: INTEGER
+      description: Distinct GitHub users who contributed to this repository
       checks:
           - name: non_negative
 custom_checks:
