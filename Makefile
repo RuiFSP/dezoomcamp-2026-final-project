@@ -113,18 +113,10 @@ app-gcp-build:
 	gcloud builds submit --project=$(GCP_PROJECT_ID) --config cloudbuild.yaml --substitutions _IMAGE=$(APP_IMAGE) .
 
 app-deploy:
-	gcloud run deploy $(APP_SERVICE) \
-		--project=$(GCP_PROJECT_ID) \
-		--region=$(GCP_REGION) \
-		--image $(APP_IMAGE) \
-		--allow-unauthenticated \
-		--memory=1Gi \
-		--cpu=1 \
-		--timeout=900 \
-		--set-env-vars GCP_PROJECT_ID=$(GCP_PROJECT_ID),BQ_DATASET=gh_analytics,ENABLE_PIPELINE_TRIGGER=false
+	cd terraform && terraform apply -auto-approve -var "app_image=$(APP_IMAGE)"
 
 app-url:
-	@gcloud run services describe $(APP_SERVICE) --project=$(GCP_PROJECT_ID) --region=$(GCP_REGION) --format='value(status.url)'
+	@cd terraform && terraform output -raw cloud_run_url
 
 .PHONY: ingest-dev ingest-stg ingest-prod \
 	run-dev run-dev-smoke run-stg run-prod \

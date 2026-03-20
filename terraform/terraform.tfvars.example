@@ -7,8 +7,10 @@
 # 4. Run: terraform plan
 # 5. Run: terraform apply
 
-project_id    = "gh-dezoomcamp"
-region        = "europe-west1"
-bucket_name   = "gh-dezoomcamp-raw-events"
-bq_dataset_id = "gh_analytics"
-environment   = "prod"
+project_id        = "gh-dezoomcamp"
+region            = "europe-west1"
+bucket_name       = "gh-dezoomcamp-raw-events"
+bq_dataset_id     = "gh_analytics"
+environment       = "prod"
+app_service_name  = "gh-analytics-streamlit"
+app_image         = "gcr.io/gh-dezoomcamp/gh-analytics-streamlit:latest"

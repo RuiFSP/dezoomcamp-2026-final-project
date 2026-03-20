@@ -18,7 +18,7 @@ The pipeline ingests hourly NDJSON archives from gharchive.org, lands them in a 
 
 ## Dashboard
 
-**Live app:** https://gh-analytics-streamlit-479777543141.europe-west1.run.app
+**Live app:** https://gh-analytics-streamlit-untavg4doq-ew.a.run.app
 
 | Event Overview | Top Repositories |
 |---|---|

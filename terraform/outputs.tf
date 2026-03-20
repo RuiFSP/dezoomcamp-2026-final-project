@@ -28,6 +28,11 @@ output "project_id" {
   description = "GCP Project ID"
 }
 
+output "cloud_run_url" {
+  value       = google_cloud_run_v2_service.dashboard.uri
+  description = "Live URL of the Streamlit dashboard on Cloud Run"
+}
+
 output "region" {
   value       = var.region
   description = "GCP Region"

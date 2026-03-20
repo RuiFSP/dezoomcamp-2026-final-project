@@ -83,3 +83,52 @@ resource "google_bigquery_dataset" "gh_analytics_stg" {
     managed_by  = "terraform"
   }
 }
+
+# Cloud Run service — Streamlit dashboard
+resource "google_cloud_run_v2_service" "dashboard" {
+  name     = var.app_service_name
+  location = var.region
+  project  = var.project_id
+
+  template {
+    containers {
+      image = var.app_image
+
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "1Gi"
+        }
+      }
+
+      env {
+        name  = "GCP_PROJECT_ID"
+        value = var.project_id
+      }
+      env {
+        name  = "BQ_DATASET"
+        value = var.bq_dataset_id
+      }
+      env {
+        name  = "ENABLE_PIPELINE_TRIGGER"
+        value = "false"
+      }
+    }
+
+    timeout = "900s"
+  }
+
+  labels = {
+    project    = "github-analytics"
+    managed_by = "terraform"
+  }
+}
+
+# Allow public (unauthenticated) access
+resource "google_cloud_run_v2_service_iam_member" "public_access" {
+  project  = google_cloud_run_v2_service.dashboard.project
+  location = google_cloud_run_v2_service.dashboard.location
+  name     = google_cloud_run_v2_service.dashboard.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}

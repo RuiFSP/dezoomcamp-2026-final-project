@@ -45,3 +45,15 @@ variable "environment" {
     error_message = "environment must be dev, stg, or prod."
   }
 }
+
+variable "app_service_name" {
+  description = "Cloud Run service name for the Streamlit dashboard"
+  type        = string
+  default     = "gh-analytics-streamlit"
+}
+
+variable "app_image" {
+  description = "Full container image URL to deploy (e.g. gcr.io/PROJECT/IMAGE:TAG). Build with: make app-gcp-build"
+  type        = string
+  default     = "gcr.io/gh-dezoomcamp/gh-analytics-streamlit:latest"
+}
