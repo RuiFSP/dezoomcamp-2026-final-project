@@ -149,7 +149,7 @@ This project demonstrates production-grade data engineering practices:
 
 ### 1. Data Quality & Validation
 
-Each analytical mart includes **declarative data quality checks** that run automatically on every pipeline execution:
+Every asset in the pipeline includes **declarative data quality checks** that run automatically on every pipeline execution:
 
 - **Column-level checks**: NOT NULL, UNIQUE, numeric ranges
 - **Custom validation queries**: SQL assertions on business logic
