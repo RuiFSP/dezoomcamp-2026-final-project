@@ -299,63 +299,45 @@ if gcs_hour_object_exists(f"{date}/{hour}"):
 
 ### 1. Partitioning is Essential
 
-**Lesson:** Without date partitioning, querying a mart table scans all historical data.
-
-**Event:** On a test query filtering `WHERE event_date = '2026-03-20'`, BigQuery scanned 30 days of data (~30 GB) instead of one day (~1 GB).
-
-**Resolution:** Added `partition_by: DATE(event_timestamp)` to all marts. Query cost dropped from ~$0.15 to ~$0.005.
-
-**Takeaway:** Always partition analytical tables on the filter you use most frequently (usually date or tenant_id).
+- **Lesson:** Without date partitioning, querying a mart table scans all historical data.
+- **Event:** On a test query filtering `WHERE event_date = '2026-03-20'`, BigQuery scanned 30 days of data (~30 GB) instead of one day (~1 GB).
+- **Resolution:** Added `partition_by: DATE(event_timestamp)` to all marts. Query cost dropped from ~$0.15 to ~$0.005.
+- **Takeaway:** Always partition analytical tables on the filter you use most frequently (usually date or tenant_id).
 
 ### 2. Clustering Doesn't Guarantee Speed
 
-**Lesson:** Clustering is a hint, not a guarantee. BigQuery applies cluster pruning heuristically.
-
-**Event:** Queries on `repo_name` were slower than expected because `repo_name` has millions of distinct values.
-
-**Resolution:** Accepted that clustering is a "nice-to-have" for this volume. Focus effort on partitioning, which is deterministic.
-
-**Takeaway:** Cluster on moderate-cardinality columns (100–10k distinct values). For very high cardinality, consider denormalization or pre-aggregation instead.
+- **Lesson:** Clustering is a hint, not a guarantee. BigQuery applies cluster pruning heuristically.
+- **Event:** Queries on `repo_name` were slower than expected because `repo_name` has millions of distinct values.
+- **Resolution:** Accepted that clustering is a "nice-to-have" for this volume. Focus effort on partitioning, which is deterministic.
+- **Takeaway:** Cluster on moderate-cardinality columns (100–10k distinct values). For very high cardinality, consider denormalization or pre-aggregation instead.
 
 ### 3. Deduplication Overhead is Worth It
 
-**Lesson:** Staging layer deduplication adds ~2 second overhead but prevents data quality issues downstream.
-
-**Event:** Without deduplication, the same GitHub event (e.g., a PushEvent with ID `123`) appeared in marts multiple times after a retry.
-
-**Resolution:** Added `ROW_NUMBER() OVER (PARTITION BY id ORDER BY created_at DESC) = 1` to the staging SQL.
-
-**Takeaway:** Pay the small upfront cost of deduplication to guarantee downstream data quality.
+- **Lesson:** Staging layer deduplication adds ~2 second overhead but prevents data quality issues downstream.
+- **Event:** Without deduplication, the same GitHub event (e.g., a PushEvent with ID `123`) appeared in marts multiple times after a retry.
+- **Resolution:** Added `ROW_NUMBER() OVER (PARTITION BY id ORDER BY created_at DESC) = 1` to the staging SQL.
+- **Takeaway:** Pay the small upfront cost of deduplication to guarantee downstream data quality.
 
 ### 4. Custom Data Quality Checks Scale Poorly
 
-**Lesson:** Custom checks are powerful but not scalable to hundreds of tables.
-
-**Event:** After adding 5 marts, maintaining 5 custom checks became tedious (updating as business rules change).
-
-**Resolution:** Limited custom checks to the most critical marts (top_repos, events_by_type). Standard column checks cover the rest.
-
-**Takeaway:** Use column-level checks as the baseline. Reserve custom checks for business-critical tables; document them well.
+- **Lesson:** Custom checks are powerful but not scalable to hundreds of tables.
+- **Event:** After adding 5 marts, maintaining 5 custom checks became tedious (updating as business rules change).
+- **Resolution:** Limited custom checks to the most critical marts (top_repos, events_by_type). Standard column checks cover the rest.
+- **Takeaway:** Use column-level checks as the baseline. Reserve custom checks for business-critical tables; document them well.
 
 ### 5. Logging & Observability Gaps
 
-**Lesson:** When a Bruin asset silently completes with 0 rows, it's hard to distinguish "no data today" from "pipeline broke."
-
-**Event:** A partially-failed ingestion run left a raw table with 0 records. The pipeline continued, silently producing empty marts.
-
-**Resolution:** Added `print(f"Loaded {rows:,} rows for {date}")` to ingestion steps. Bruin logs show these prints, aiding debugging.
-
-**Takeaway:** Log key metrics (records processed, load time, check results) at each major step. Treat logging as a first-class requirement.
+- **Lesson:** When a Bruin asset silently completes with 0 rows, it's hard to distinguish "no data today" from "pipeline broke."
+- **Event:** A partially-failed ingestion run left a raw table with 0 records. The pipeline continued, silently producing empty marts.
+- **Resolution:** Added `print(f"Loaded {rows:,} rows for {date}")` to ingestion steps. Bruin logs show these prints, aiding debugging.
+- **Takeaway:** Log key metrics (records processed, load time, check results) at each major step. Treat logging as a first-class requirement.
 
 ### 6. Environment Management is Subtle
 
-**Lesson:** Forgetting to source environment variables or using wrong BigQuery dataset is a common error.
-
-**Event:** A local test ran `SELECT * FROM stg_github_events` which read from `dev_gh_analytics`, but the commit pushed to `main` with hardcoded dataset reference.
-
-**Resolution:** Parameterized all SQL references using `{{ var.current_dataset }}` in Bruin. Enforced via linting (ruff, pre-commit).
-
-**Takeaway:** Use templating/variable injection for all environment-specific values. Make hardcoding difficult or impossible.
+- **Lesson:** Forgetting to source environment variables or using wrong BigQuery dataset is a common error.
+- **Event:** A local test ran `SELECT * FROM stg_github_events` which read from `dev_gh_analytics`, but the commit pushed to `main` with hardcoded dataset reference.
+- **Resolution:** Parameterized all SQL references using `{{ var.current_dataset }}` in Bruin. Enforced via linting (ruff, pre-commit).
+- **Takeaway:** Use templating/variable injection for all environment-specific values. Make hardcoding difficult or impossible.
 
 ---
 
