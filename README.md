@@ -289,7 +289,7 @@ cd dezoomcamp-2026-final-project
 ```bash
 uv venv
 source .venv/bin/activate
-uv pip install -e ".[dev,test]"
+uv sync --extra dev --extra test
 ```
 
 Copy and fill in the environment files:
