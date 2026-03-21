@@ -86,7 +86,7 @@ We assert on *counts* (SELECT ... THEN 0 ELSE 1), not on presence. This ensures 
 
 All marts are **partitioned by date**:
 
-```sql
+```yaml
 materialization:
     type: table
     partition_by: event_date
@@ -102,7 +102,7 @@ materialization:
 
 High-cardinality columns are clustered for faster lookups:
 
-```sql
+```yaml
 materialization:
     type: table
     partition_by: event_date
@@ -129,7 +129,7 @@ With partitioning + clustering, typical queries run in <1 second:
 -- Runs against ~1 partition + cluster range; <100M bytes scanned
 SELECT event_type, COUNT(*) as cnt
 FROM `gh_analytics.events_by_type`
-WHERE event_date = CURDATE() - 1
+WHERE event_date = DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY)
 GROUP BY event_type
 ORDER BY cnt DESC;
 ```
@@ -199,12 +199,15 @@ WHERE rn = 1
 
 Marts inherit the staging table's partition + cluster keys:
 
-```sql
--- in mart definition
+```yaml
+# in mart definition
 depends:
     - gh_analytics.stg_github_events
+```
 
--- Queries over stg_github_events benefit from partitioning
+Queries over `stg_github_events` benefit from its partition pruning automatically:
+
+```sql
 SELECT ... FROM `{{ var.current_dataset }}.stg_github_events`
 WHERE DATE(event_timestamp) = CURRENT_DATE()
 ```
@@ -322,7 +325,7 @@ if gcs_hour_object_exists(f"{date}/{hour}"):
 ### 4. Custom Data Quality Checks Scale Poorly
 
 - **Lesson:** Custom checks are powerful but not scalable to hundreds of tables.
-- **Event:** After adding 5 marts, maintaining 5 custom checks became tedious (updating as business rules change).
+- **Event:** After adding 4 marts, maintaining custom checks for each became tedious (updating as business rules change).
 - **Resolution:** Limited custom checks to the most critical marts (top_repos, events_by_type). Standard column checks cover the rest.
 - **Takeaway:** Use column-level checks as the baseline. Reserve custom checks for business-critical tables; document them well.
 

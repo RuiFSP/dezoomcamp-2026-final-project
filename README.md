@@ -177,7 +177,7 @@ All marts are optimized for analytical queries:
 - **Window functions for deduplication**: Handles duplicate events gracefully in the staging layer
 
 Example:
-```sql
+```yaml
 materialization:
     type: table
     partition_by: event_date
@@ -415,16 +415,14 @@ Safe-to-commit examples are included in:
 
 - The raw ingestion uses hourly files in GCS to make retries and backfills resumable.
 - The BigQuery raw table reload is idempotent per date.
-- Streamlit is the only dashboard intended for the final submission.
 - The Cloud Run deployment can be destroyed via `terraform destroy` to avoid ongoing costs. Contact the author for a live demo if needed.
 
-## Post-Submission Checklist
+## Cleanup & Cost Control
 
-- Verify `git status` is clean before any post-submission cleanup.
-- Confirm `.env`, `.bruin.yml`, `terraform.tfvars`, and any service-account JSON files are still untracked.
-- If reviewer access is no longer needed, remove or restrict public Cloud Run access.
-- If reviewer access is no longer needed, run `terraform -chdir=terraform destroy` to avoid ongoing Cloud Run, BigQuery, and GCS costs.
-- If you keep the stack running, create a manual billing budget in GCP Billing when Terraform cannot create `google_billing_budget` due to billing-account permissions.
-- Delete old container images and unused build artifacts if you want tighter cost control beyond Terraform-managed resources.
+When you no longer need the stack running:
+
+- Run `terraform -chdir=terraform destroy` to tear down Cloud Run, BigQuery datasets, and the GCS bucket.
+- Delete old container images from Google Container Registry to avoid storage costs.
 - Revoke or rotate any local service-account keys used during setup.
-- Keep the final submission commit/tag intact so cleanup changes do not alter the reviewed snapshot.
+- Confirm `.env`, `.bruin.yml`, `terraform.tfvars`, and any service-account JSON files remain untracked (`git status` should show no secrets).
+- If you set up a billing budget manually in GCP Console (because `google_billing_budget` requires elevated billing-account permissions not covered by project-level Terraform access), remove it when no longer needed.
