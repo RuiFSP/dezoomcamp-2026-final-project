@@ -237,73 +237,111 @@ See [ENGINEERING.md](./ENGINEERING.md) for deeper technical details and trade-of
 
 ### 1. Prerequisites
 
-- GCP project and credentials
-- gcloud CLI
-- Terraform
-- Bruin CLI
-- Python 3.12
-- uv
+Install the following tools before starting:
 
-### 2. Configure local environment
+| Tool | Install |
+|---|---|
+| Python 3.12 | [python.org](https://www.python.org/downloads/) or `pyenv install 3.12` |
+| uv | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| gcloud CLI | [cloud.google.com/sdk](https://cloud.google.com/sdk/docs/install) |
+| Terraform | [developer.hashicorp.com](https://developer.hashicorp.com/terraform/install) |
+| Bruin CLI | `curl -LsSf https://raw.githubusercontent.com/bruin-data/bruin/main/install.sh \| sh` |
+
+You also need a **GCP project** with billing enabled and a service account with the following roles: `BigQuery Admin`, `Storage Admin`, `Run Admin`, `Service Account User`.
+
+### 2. Clone the repository
+
+```bash
+git clone https://github.com/RuiFSP/dezoomcamp-2026-final-project.git
+cd dezoomcamp-2026-final-project
+```
+
+### 3. Configure local environment
 
 ```bash
 uv venv
 source .venv/bin/activate
 uv pip install -e ".[dev,test]"
-cp .env.example .env
 ```
 
-Fill in `.env` with your project-specific values.
+Copy and fill in the environment files:
 
-### 3. Set up pre-commit hooks (optional but recommended)
+```bash
+cp .env.example .env
+cp .bruin.yml.example .bruin.yml
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars
+```
 
-Pre-commit hooks automatically format and lint your code before committing:
+Key values to set in **`.env`**:
+
+| Variable | Description |
+|---|---|
+| `GCP_PROJECT_ID` | Your GCP project ID |
+| `GCS_BUCKET_NAME` | A globally unique GCS bucket name |
+| `BQ_DATASET_ID` | BigQuery dataset (default: `gh_analytics`) |
+| `GCP_REGION` | GCP region (default: `europe-west1`) |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path to your service account JSON key |
+
+The **`.bruin.yml`** file reads `GCP_PROJECT_ID` and `GCP_REGION` from your environment — no edits needed if `.env` is filled in correctly.
+
+In **`terraform/terraform.tfvars`**, update at minimum:
+- `project_id` — your GCP project ID
+- `bucket_name` — must be globally unique
+- `billing_account_id` — optional, only needed for budget alerts
+
+### 4. Authenticate with GCP
+
+```bash
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+gcloud auth application-default login
+```
+
+> The pipeline uses **Application Default Credentials (ADC)** — `gcloud auth application-default login` is required even if `GOOGLE_APPLICATION_CREDENTIALS` is set.
+
+### 5. Bootstrap GCP and provision infrastructure
+
+> **Note:** `scripts/setup-gcp-auto.sh` has defaults (`PROJECT_ID`, `REGION`, key path) set for the original author's project. Edit these at the top of the script before running.
+
+```bash
+bash scripts/setup-gcp-auto.sh   # creates GCP project, service account, enables APIs
+make infra-apply                  # provisions GCS bucket, BigQuery datasets, Cloud Run
+```
+
+### 6. Set up pre-commit hooks (optional but recommended)
 
 ```bash
 uv pip install pre-commit
 pre-commit install
 ```
 
-The hooks will run on `git commit`. To manually run all hooks:
+To manually run all hooks:
 
 ```bash
 pre-commit run --all-files
 ```
 
-### 4. Bootstrap GCP and infrastructure
+### 7. Run the pipeline
 
-The helper script is a convenience bootstrap for local development. Review the defaults in
-`scripts/setup-gcp-auto.sh` before running it, especially the project ID and key path.
-
-```bash
-bash scripts/setup-gcp-auto.sh
-cp terraform/terraform.tfvars.example terraform/terraform.tfvars
-# edit terraform/terraform.tfvars with your project-specific values
-make infra-apply
-```
-
-At minimum, update `project_id` and any globally unique resource names in
-`terraform/terraform.tfvars` before applying infrastructure.
-
-### 5. Run the pipeline
+Start with a smoke test (a few hours of data) before a full run:
 
 ```bash
-make run-dev-smoke
-make run-dev
-make run-stg
-make run-prod
+make run-dev-smoke   # quick smoke test (dev environment)
+make run-dev         # full day, dev dataset
+make run-stg         # full day, staging dataset
+make run-prod        # full day, production dataset
 ```
 
-### 6. Run tests
+### 8. Run tests
 
 ```bash
-make test
-make test-dev
-make test-stg
-make test-prod
+make test            # run all tests
+make test-dev        # run against dev dataset
+make test-stg        # run against staging dataset
+make test-prod       # run against production dataset
 ```
 
-### 7. Run Streamlit locally
+### 9. Run Streamlit locally
 
 ```bash
 make app-sync
@@ -370,6 +408,7 @@ Do not commit any of the following:
 Safe-to-commit examples are included in:
 
 - `.env.example`
+- `.bruin.yml.example`
 - `terraform/terraform.tfvars.example`
 
 ## Notes

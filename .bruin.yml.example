@@ -1,0 +1,32 @@
+# Bruin Pipeline Configuration
+# Copy this file to .bruin.yml and ensure your GCP environment variables are set.
+# .bruin.yml is git-ignored — never commit it as it may contain credentials.
+
+default_environment: dev
+
+environments:
+  dev:
+    schema_prefix: "dev_"
+    connections:
+      google_cloud_platform:
+        - name: "bigquery-default"
+          project_id: "${GCP_PROJECT_ID}"
+          location: "${GCP_REGION}"
+          use_application_default_credentials: true
+
+  staging:
+    schema_prefix: "stg_"
+    connections:
+      google_cloud_platform:
+        - name: "bigquery-default"
+          project_id: "${GCP_PROJECT_ID}"
+          location: "${GCP_REGION}"
+          use_application_default_credentials: true
+
+  prod:
+    connections:
+      google_cloud_platform:
+        - name: "bigquery-default"
+          project_id: "${GCP_PROJECT_ID}"
+          location: "${GCP_REGION}"
+          use_application_default_credentials: true
