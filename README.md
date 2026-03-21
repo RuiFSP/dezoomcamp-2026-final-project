@@ -10,6 +10,25 @@
 ![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
 [![Tests](https://github.com/RuiFSP/dezoomcamp-2026-final-project/actions/workflows/test.yml/badge.svg)](https://github.com/RuiFSP/dezoomcamp-2026-final-project/actions/workflows/test.yml)
 
+## Table of Contents
+
+- [Problem Description](#problem-description)
+- [Dashboard](#dashboard)
+- [Cloud Proof](#cloud-proof)
+- [Architecture](#architecture)
+- [Stack](#stack)
+- [Project Structure](#project-structure)
+- [Architectural Decisions](#architectural-decisions)
+- [Data Engineering Best Practices](#data-engineering-best-practices)
+- [Environments](#environments)
+- [Quick Start](#quick-start)
+- [Streamlit Deployment](#streamlit-deployment)
+- [CI/CD Pipeline](#cicd-pipeline)
+- [Dashboard Scope](#dashboard-scope)
+- [Security](#security)
+- [Notes](#notes)
+- [Cleanup & Cost Control](#cleanup--cost-control)
+
 ## Problem Description
 
 GitHub generates millions of public events every day — pushes, pull requests, issues, forks, stars — across thousands of repositories and contributors worldwide. This raw activity stream is publicly available via [gharchive.org](https://gharchive.org), but it is not pre-aggregated or directly queryable in a useful analytical form.
