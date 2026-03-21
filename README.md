@@ -139,7 +139,7 @@ This project uses **Bruin CLI** as the single orchestration and transformation t
 
 - Smaller ecosystem than Airflow/dbt (fewer integrations documented)
 - Less commercial support than mature tools
-- Best suited for teams comfortable with YAML/SQL; visual UI support is limited
+- Best suited for teams comfortable with YAML/SQL; the Bruin VS Code extension provides a visual lineage view, but the broader IDE ecosystem is still maturing
 
 For a learning project and single-use pipeline, Bruin strikes a balance between power and simplicity.
 
@@ -255,12 +255,12 @@ cp .env.example .env
 
 Fill in `.env` with your project-specific values.
 
-### 2.5. Set up pre-commit hooks (optional but recommended)
+### 3. Set up pre-commit hooks (optional but recommended)
 
 Pre-commit hooks automatically format and lint your code before committing:
 
 ```bash
-pip install pre-commit
+uv pip install pre-commit
 pre-commit install
 ```
 
@@ -270,7 +270,7 @@ The hooks will run on `git commit`. To manually run all hooks:
 pre-commit run --all-files
 ```
 
-### 3. Bootstrap GCP and infrastructure
+### 4. Bootstrap GCP and infrastructure
 
 The helper script is a convenience bootstrap for local development. Review the defaults in
 `scripts/setup-gcp-auto.sh` before running it, especially the project ID and key path.
@@ -285,7 +285,7 @@ make infra-apply
 At minimum, update `project_id` and any globally unique resource names in
 `terraform/terraform.tfvars` before applying infrastructure.
 
-### 4. Run the pipeline
+### 5. Run the pipeline
 
 ```bash
 make run-dev-smoke
@@ -294,7 +294,7 @@ make run-stg
 make run-prod
 ```
 
-### 5. Run tests
+### 6. Run tests
 
 ```bash
 make test
@@ -303,7 +303,7 @@ make test-stg
 make test-prod
 ```
 
-### 6. Run Streamlit locally
+### 7. Run Streamlit locally
 
 ```bash
 make app-sync
