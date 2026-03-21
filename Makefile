@@ -38,6 +38,21 @@ run-stg:
 run-prod:
 	@$(LOAD_ENV) $(BRUIN) run --environment prod --force --var '{"current_dataset":"gh_analytics"}' bruin/
 
+# Backfill helpers: DATE_FROM and DATE_TO must be supplied, e.g.:
+#   make backfill-dev DATE_FROM=2026-03-14 DATE_TO=2026-03-20
+DATE_FROM ?= $(error Set DATE_FROM, e.g. DATE_FROM=2026-03-14)
+DATE_TO   ?= $(error Set DATE_TO,   e.g. DATE_TO=2026-03-20)
+
+backfill-dev:
+	@$(LOAD_ENV) $(BRUIN) run --environment dev \
+	  --start-date $(DATE_FROM) --end-date $(DATE_TO) \
+	  --var '{"current_dataset":"dev_gh_analytics"}' bruin/
+
+backfill-prod:
+	@$(LOAD_ENV) $(BRUIN) run --environment prod --force \
+	  --start-date $(DATE_FROM) --end-date $(DATE_TO) \
+	  --var '{"current_dataset":"gh_analytics"}' bruin/
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Data quality tests
 # ─────────────────────────────────────────────────────────────────────────────
@@ -120,6 +135,7 @@ app-url:
 
 .PHONY: ingest-dev ingest-stg ingest-prod \
 	run-dev run-dev-smoke run-stg run-prod \
+        backfill-dev backfill-prod \
         test-dev test-stg test-prod \
         test test-cov \
         infra-plan infra-apply infra-destroy \

@@ -351,14 +351,30 @@ pre-commit run --all-files
 
 ### 7. Run the pipeline
 
-Start with a smoke test (a few hours of data) before a full run:
+Each `make run-*` fetches **one day** of data (yesterday UTC by default). Start with a smoke test before a full run:
 
 ```bash
-make run-dev-smoke   # quick smoke test (dev environment)
+make run-dev-smoke   # quick smoke test (dev environment, 1 hour)
 make run-dev         # full day, dev dataset
 make run-stg         # full day, staging dataset
 make run-prod        # full day, production dataset
 ```
+
+#### Backfilling multiple days
+
+To load more than one day of historical data, use the `backfill-dev` / `backfill-prod` Makefile targets with explicit date bounds:
+
+```bash
+# Load 7 days into dev
+make backfill-dev DATE_FROM=2026-03-14 DATE_TO=2026-03-20
+
+# Load 7 days into production
+make backfill-prod DATE_FROM=2026-03-14 DATE_TO=2026-03-20
+```
+
+Bruin iterates over each day in the range and injects `BRUIN_START_DATE` per run, so all assets (fetch → GCS → BigQuery load → staging → marts) execute once per day.
+
+> **Note:** GH Archive data is available from 2011. Each day downloads ~24 hourly NDJSON files, so large backfills take time. Start small to verify your setup.
 
 ### 8. Run tests
 
