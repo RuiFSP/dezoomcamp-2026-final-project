@@ -22,7 +22,7 @@ GitHub generates millions of public events every day — pushes, pull requests, 
 - What is the daily mix of event types — is it push-heavy, or driven by issues and PRs?
 - Which programming language ecosystems (inferred from repo naming patterns) are most active?
 
-The pipeline ingests hourly NDJSON archives from gharchive.org, lands them in a GCS data lake, loads and stages them in BigQuery, then materialises four analytical marts consumed by a Streamlit dashboard.
+The pipeline ingests hourly NDJSON archives from gharchive.org, lands them in a GCS data lake, loads and stages them in BigQuery, then materializes four analytical marts consumed by a Streamlit dashboard.
 
 ## Dashboard
 
@@ -170,20 +170,29 @@ Bruin executes these checks as part of the pipeline; if any fail, the run stops 
 
 ### 2. Materialization & Performance
 
-All marts are optimized for analytical queries:
+All assets are optimized for analytical queries:
 
 - **Partitioned by date**: Scans only required days, cutting query costs by 50–80%
-- **Clustered by domain keys**: High-cardinality columns (`event_type`, `repo_name`) improve filter pushdown
+- **Clustered by query dimension**: Each asset clusters on its primary filter column — staging uses `event_type` + `repo_name`; marts each use a single key (`hour_of_day`, `event_type`, `repo_name`, or `repo_language`)
 - **Window functions for deduplication**: Handles duplicate events gracefully in the staging layer
 
-Example:
+Example (staging asset — two cluster keys):
+```yaml
+materialization:
+    type: table
+    partition_by: DATE(event_timestamp)
+    cluster_by:
+        - event_type
+        - repo_name
+```
+
+Example (mart — single cluster key):
 ```yaml
 materialization:
     type: table
     partition_by: event_date
     cluster_by:
         - event_type
-        - repo_name
 ```
 
 ### 3. Orchestration & Dependency Management

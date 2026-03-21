@@ -100,21 +100,36 @@ materialization:
 
 ### Clustering Strategy
 
-High-cardinality columns are clustered for faster lookups:
+Each asset clusters on its primary query dimension:
+
+- **Staging** (`stg_github_events`): clusters on `event_type` + `repo_name` — the two most common dashboard filters
+- **Marts**: each uses a single cluster key matched to its query pattern:
+  - `events_by_type` → `event_type`
+  - `events_by_hour` → `hour_of_day`
+  - `top_repos` → `repo_name`
+  - `language_trends` → `repo_language`
 
 ```yaml
+# staging asset — two cluster keys
 materialization:
     type: table
-    partition_by: event_date
+    partition_by: DATE(event_timestamp)
     cluster_by:
         - event_type
         - repo_name
+
+# mart example (events_by_type)
+materialization:
+    type: table
+    partition_by: event_date  # pre-computed column in SELECT
+    cluster_by:
+        - event_type
 ```
 
 **Why:**
-- Dashboard queries often filter by `event_type` (PushEvent, PullRequestEvent, etc.) or `repo_name` (top 100 repos)
 - Clustering sorts data within each partition by these columns, enabling BigQuery to skip unnecessary blocks
 - Cluster pruning is _not_ guaranteed but heuristically applied; it complements partitioning
+- Each mart's cluster key is chosen to match the most selective dashboard filter for that table
 
 **Limitations:**
 - Clustering adds overhead during writes (sorting cost)
@@ -305,7 +320,7 @@ if gcs_hour_object_exists(f"{date}/{hour}"):
 
 - **Lesson:** Without date partitioning, querying a mart table scans all historical data.
 - **Event:** On a test query filtering `WHERE event_date = '2026-03-20'`, BigQuery scanned 30 days of data (~30 GB) instead of one day (~1 GB).
-- **Resolution:** Added `partition_by: DATE(event_timestamp)` to all marts. Query cost dropped from ~$0.15 to ~$0.005.
+- **Resolution:** Added date partitioning to all assets. Staging uses `partition_by: DATE(event_timestamp)` directly; marts pre-compute an `event_date` column and partition on that. Query cost dropped from ~$0.15 to ~$0.005.
 - **Takeaway:** Always partition analytical tables on the filter you use most frequently (usually date or tenant_id).
 
 ### 2. Clustering Doesn't Guarantee Speed
