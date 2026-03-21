@@ -281,15 +281,16 @@ if gcs_hour_object_exists(f"{date}/{hour}"):
 
 **Decision:** BigQuery integrates naturally with GCP (where Terraform provisions resources). Query-based pricing aligns with batch analytics (low volume). DuckDB would work for local development but adds a separate data model to sync with production.
 
-### Why Streamlit (vs. Tableau / Looker)?
+### Why Streamlit (vs. Tableau / Looker / Power BI)?
 
-| Aspect | Streamlit | Tableau | Looker |
-|--------|-----------|---------|--------|
-| **Setup Time** | Minutes | Days (requires admin setup) | Days |
-| **Coding** | Python (natural for data engineers) | No-code (drag-and-drop) | LookML (domain-specific language) |
-| **Deployment** | Cloud Run (1 command) | Requires Tableau Server | Google Cloud deployment |
-| **Cost** | Low (~$0–10/month on Cloud Run) | High ($1k+/year per user) | Medium (part of Google Cloud licensing) |
-| **For Learning** | Perfect (understand every line) | Overkill (black box) | Overkill |
+| Aspect | Streamlit | Tableau | Looker | Power BI |
+|--------|-----------|---------|--------|----------|
+| **Setup Time** | Minutes | Days (requires admin setup) | Days | Hours–Days |
+| **Coding** | Python (natural for data engineers) | No-code (drag-and-drop) | LookML (domain-specific language) | DAX / M (Microsoft-specific) |
+| **Deployment** | Cloud Run (1 command) | Requires Tableau Server | Google Cloud deployment | Power BI Service (Microsoft cloud) |
+| **Cost** | Low (~$0–10/month on Cloud Run) | High ($1k+/year per user) | Medium (part of Google Cloud licensing) | Medium ($10–20/user/month for Pro) |
+| **Portability** | Any cloud / open source | Vendor lock-in | GCP-native | Microsoft ecosystem lock-in |
+| **For Learning** | Perfect (understand every line) | Overkill (black box) | Overkill | Overkill |
 
 **Decision:** Streamlit is transparent, deployable to Cloud Run in one command, and free for learning. The code is auditable (reviewers see exactly what runs).
 
