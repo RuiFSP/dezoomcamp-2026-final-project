@@ -32,9 +32,9 @@ The Streamlit application has been deployed to Cloud Run and is available for re
 |---|---|
 | ![Event Overview](docs/screenshots/01_event_overview.png) | ![Top Repositories](docs/screenshots/02_top_repositories.png) |
 
-| Language Signals | |
-|---|---|
-| ![Language Signals](docs/screenshots/03_language_signals.png) | |
+| Language Signals |
+|---|
+| ![Language Signals](docs/screenshots/03_language_signals.png) |
 
 ## Cloud Proof
 
@@ -404,7 +404,7 @@ The Streamlit app covers:
 - Language activity trends
 - Optional pipeline admin controls
 
-## Submission Safety
+## Security
 
 Do not commit any of the following:
 

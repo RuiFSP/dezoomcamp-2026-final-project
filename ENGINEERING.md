@@ -84,7 +84,7 @@ We assert on *counts* (SELECT ... THEN 0 ELSE 1), not on presence. This ensures 
 
 ### Partitioning Strategy
 
-All marts are **partitioned by date**:
+All assets are **partitioned by date**:
 
 ```yaml
 materialization:
@@ -391,3 +391,4 @@ if gcs_hour_object_exists(f"{date}/{hour}"):
 - [Bruin Pipeline YAML](./bruin/pipeline.yml)
 - [Terraform Infrastructure](./terraform/main.tf)
 - [Ingestion Tests](./tests/test_ingest_github_events.py)
+- [Pipeline Validation Tests](./tests/test_bruin_pipeline.py)
