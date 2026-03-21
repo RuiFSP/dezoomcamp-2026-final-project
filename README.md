@@ -217,6 +217,10 @@ columns:
 
 This enables impact analysis: which assets break if the ingestion schema changes?
 
+The Bruin VS Code extension provides a live lineage view, showing the full DAG from raw ingestion through staging to all four analytical marts:
+
+![Bruin Lineage in VS Code](docs/screenshots/06_bruin_lineage.PNG)
+
 ---
 
 See [ENGINEERING.md](./ENGINEERING.md) for deeper technical details and trade-off analysis.
