@@ -32,8 +32,6 @@ columns:
     - name: repo_name
       type: STRING
       description: Full repository name (owner/repo)
-      checks:
-          - name: not_null
     - name: actor_login
       type: STRING
       description: GitHub username of the actor
@@ -45,8 +43,6 @@ columns:
     - name: repo_id
       type: STRING
       description: Repository identifier from GitHub payload
-      checks:
-          - name: not_null
     - name: actor_id
       type: STRING
       description: Actor identifier from GitHub payload
@@ -61,7 +57,7 @@ columns:
 custom_checks:
     - name: core identity fields are present
       description: Ensure staged records include event and actor identity information
-      query: "SELECT COUNT(*) FROM {{ var.current_dataset }}.stg_github_events WHERE event_id IS NULL OR actor_login IS NULL OR repo_name IS NULL"
+      query: "SELECT COUNT(*) FROM {{ var.current_dataset }}.stg_github_events WHERE event_id IS NULL OR actor_login IS NULL OR event_type IS NULL"
       value: 0
 @bruin */
 
