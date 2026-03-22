@@ -249,6 +249,8 @@ The Bruin VS Code extension provides a live lineage view, showing the full DAG f
 
 ![Bruin Lineage in VS Code](docs/screenshots/06_bruin_lineage.PNG)
 
+A `.mcp.json` file is included at the project root, so VS Code / GitHub Copilot will automatically offer to connect to the **Bruin MCP server** when you open the repo. This lets Copilot query Bruin documentation and pipeline context directly, provided `bruin` is on your `PATH`.
+
 ---
 
 See [ENGINEERING.md](./ENGINEERING.md) for deeper technical details and trade-off analysis.
