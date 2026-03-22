@@ -362,7 +362,12 @@ if gcs_hour_object_exists(f"{date}/{hour}"):
 
 ## Next Steps (If Scaling to Production)
 
-1. **Alerting & SLOs**
+1. **Bruin Cloud**
+   - Migrate from self-managed CLI + GitHub Actions to [Bruin Cloud](https://cloud.getbruin.com/register) for a fully managed experience
+   - Bruin Cloud adds: automatic scheduling, a web-based run monitor, interactive column-level lineage, table/column health checks UI, cost & usage reports, and managed secrets — all connected directly to this Git repo
+   - The pipeline YAML and assets require no changes; Bruin Cloud reads the existing `pipeline.yml` and `bruin/` directory as-is
+
+2. **Alerting & SLOs**
    - Export data quality check results to Cloud Logging
    - Trigger alerts if pipeline fails or data quality check fails
    - Define SLOs (e.g., "pipeline completes by 11 AM UTC daily")

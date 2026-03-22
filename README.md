@@ -459,6 +459,7 @@ Safe-to-commit examples are included in:
 
 ## Notes
 
+- **Bruin Cloud**: This pipeline is ready to be connected to [Bruin Cloud](https://cloud.getbruin.com/register) — a managed platform that adds automatic scheduling, a web run monitor, column-level lineage, data quality dashboards, and cost reporting on top of the same `pipeline.yml` and `bruin/` assets, with no code changes required.
 - The raw ingestion uses hourly files in GCS to make retries and backfills resumable.
 - The BigQuery raw table reload is idempotent per date.
 - The Cloud Run deployment can be destroyed via `terraform destroy` to avoid ongoing costs. Contact the author for a live demo if needed.
