@@ -2,6 +2,7 @@
 name: gh_analytics.top_repos
 type: bq.sql
 description: GitHub repositories ranked by activity, including event types, stars, forks, and unique contributors
+owner: data-platform
 materialization:
     type: table
     partition_by: event_date
@@ -13,11 +14,13 @@ columns:
     - name: event_date
       type: DATE
       description: Date of the event (UTC)
+            primary_key: true
       checks:
           - name: not_null
     - name: repo_name
       type: STRING
       description: Full repository name in format owner/repo
+            primary_key: true
       checks:
           - name: not_null
     - name: total_events

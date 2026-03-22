@@ -2,6 +2,7 @@
 name: gh_analytics.stg_github_events
 type: bq.sql
 description: Cleaned and deduplicated GitHub events from raw layer, ready for analytics
+owner: data-platform
 materialization:
     type: table
     partition_by: DATE(event_timestamp)
@@ -14,6 +15,7 @@ columns:
     - name: event_id
       type: STRING
       description: Unique event identifier
+      primary_key: true
       checks:
           - name: not_null
           - name: unique
