@@ -21,6 +21,7 @@
 - [Architectural Decisions](#architectural-decisions)
 - [Data Engineering Best Practices](#data-engineering-best-practices)
 - [Environments](#environments)
+- [Execution Modes](#execution-modes)
 - [Quick Start](#quick-start)
 - [Streamlit Deployment](#streamlit-deployment)
 - [CI/CD Pipeline](#cicd-pipeline)
@@ -262,6 +263,15 @@ See [ENGINEERING.md](./ENGINEERING.md) for deeper technical details and trade-of
 | dev | dev_gh_analytics |
 | staging | stg_gh_analytics |
 | prod | gh_analytics |
+
+## Execution Modes
+
+This project supports both execution paths:
+
+- **Local / self-managed (default in this repo):** run the pipeline with `make run-*` or `bruin run` from your machine or CI.
+- **Bruin Cloud (optional):** connect the same repo to Bruin Cloud for managed scheduling, run monitoring, lineage UI, and governance dashboards.
+
+Both modes use the same pipeline code (`bruin/pipeline.yml` + `bruin/assets/**`). You can keep local runs for development while using Bruin Cloud for managed orchestration.
 
 ## Quick Start
 
