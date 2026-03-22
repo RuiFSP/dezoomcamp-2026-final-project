@@ -142,6 +142,7 @@ resource "google_cloud_run_v2_service_iam_member" "public_access" {
 
 # Monthly budget alert for Cloud Run spending
 resource "google_billing_budget" "cloud_run" {
+  count           = var.enable_billing_budget ? 1 : 0
   billing_account = var.billing_account_id
   display_name    = "GitHub Analytics Cloud Run - Monthly Budget"
 

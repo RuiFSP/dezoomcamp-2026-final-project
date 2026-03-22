@@ -58,12 +58,19 @@ variable "app_image" {
   default     = "gcr.io/gh-dezoomcamp/gh-analytics-streamlit:latest"
 }
 
+variable "enable_billing_budget" {
+  description = "Whether Terraform should manage the Cloud Run billing budget resource. Leave false unless the caller has billing-account-level budget permissions."
+  type        = bool
+  default     = false
+}
+
 variable "billing_account_id" {
   description = "GCP Billing Account ID for budget alerts (format: 012345-ABCDEF-G9H2I3). Find at: https://console.cloud.google.com/billing/settings"
   type        = string
+  default     = ""
   validation {
-    condition     = length(var.billing_account_id) > 0
-    error_message = "billing_account_id must not be empty. Find it in GCP Console > Billing > Settings."
+    condition     = !var.enable_billing_budget || length(trimspace(var.billing_account_id)) > 0
+    error_message = "billing_account_id must not be empty when enable_billing_budget=true. Find it in GCP Console > Billing > Settings."
   }
 }
 
