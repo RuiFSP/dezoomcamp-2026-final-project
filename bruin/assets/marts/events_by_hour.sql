@@ -14,13 +14,13 @@ columns:
     - name: event_date
       type: DATE
       description: Date of the event (UTC)
-            primary_key: true
+      primary_key: true
       checks:
           - name: not_null
     - name: hour_of_day
       type: INTEGER
       description: Hour of day in UTC (0-23)
-            primary_key: true
+      primary_key: true
       checks:
           - name: not_null
           - name: non_negative

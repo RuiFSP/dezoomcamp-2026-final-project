@@ -14,13 +14,13 @@ columns:
     - name: event_date
       type: DATE
       description: Date of the event (UTC)
-            primary_key: true
+      primary_key: true
       checks:
           - name: not_null
     - name: repo_name
       type: STRING
       description: Full repository name in format owner/repo
-            primary_key: true
+      primary_key: true
       checks:
           - name: not_null
     - name: total_events

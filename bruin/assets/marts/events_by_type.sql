@@ -14,13 +14,13 @@ columns:
     - name: event_date
       type: DATE
       description: Date of the event (UTC)
-            primary_key: true
+      primary_key: true
       checks:
           - name: not_null
     - name: event_type
       type: STRING
       description: GitHub event type (PushEvent, PullRequestEvent, etc.)
-            primary_key: true
+      primary_key: true
       checks:
           - name: not_null
     - name: event_count
