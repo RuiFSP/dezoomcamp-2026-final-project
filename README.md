@@ -102,11 +102,11 @@ flowchart LR
 
     TF -->|provisions| GCS
     TF -->|provisions| WH
-    TF -->|provisions/updates| APP
-    GCLOUD -->|direct deploy/update| APP
+    TF -->|provisions and updates| APP
+    GCLOUD -->|direct deploy fallback| APP
 
     SRC -->|hourly fetch| BRUIN
-    SRC -->|hourly fetch (managed)| BCLOUD
+    SRC -->|hourly fetch managed| BCLOUD
     BRUIN -->|lands raw files| GCS
     BCLOUD -->|lands raw files| GCS
     BRUIN -->|loads raw data| RAW
