@@ -2,6 +2,7 @@
 name: gh_analytics.events_by_type
 type: bq.sql
 description: GitHub events aggregated by type, with daily unique actor and repository counts
+owner: data-platform
 materialization:
     type: table
     partition_by: event_date
@@ -13,11 +14,13 @@ columns:
     - name: event_date
       type: DATE
       description: Date of the event (UTC)
+      primary_key: true
       checks:
           - name: not_null
     - name: event_type
       type: STRING
       description: GitHub event type (PushEvent, PullRequestEvent, etc.)
+      primary_key: true
       checks:
           - name: not_null
     - name: event_count

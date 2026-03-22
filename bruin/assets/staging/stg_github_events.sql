@@ -2,6 +2,7 @@
 name: gh_analytics.stg_github_events
 type: bq.sql
 description: Cleaned and deduplicated GitHub events from raw layer, ready for analytics
+owner: data-platform
 materialization:
     type: table
     partition_by: DATE(event_timestamp)
@@ -14,6 +15,7 @@ columns:
     - name: event_id
       type: STRING
       description: Unique event identifier
+      primary_key: true
       checks:
           - name: not_null
           - name: unique
@@ -33,9 +35,30 @@ columns:
     - name: actor_login
       type: STRING
       description: GitHub username of the actor
+      checks:
+          - name: not_null
     - name: org_login
       type: STRING
       description: GitHub organisation login (nullable)
+    - name: repo_id
+      type: STRING
+      description: Repository identifier from GitHub payload
+    - name: actor_id
+      type: STRING
+      description: Actor identifier from GitHub payload
+      checks:
+          - name: not_null
+    - name: is_public
+      type: BOOLEAN
+      description: Whether the GitHub event is public
+    - name: payload
+      type: JSON
+      description: Raw event payload JSON from GitHub Archive
+custom_checks:
+    - name: core identity fields are present
+      description: Ensure staged records include event and actor identity information
+      query: "SELECT COUNT(*) FROM {{ var.current_dataset }}.stg_github_events WHERE event_id IS NULL OR actor_login IS NULL OR event_type IS NULL"
+      value: 0
 @bruin */
 
 WITH deduplicated AS (

@@ -1,6 +1,7 @@
 """@bruin
 name: ingest.fetch_to_gcs
 description: "Download GitHub Archive for the run date and upload to GCS (data lake layer)"
+owner: data-platform
 image: python:3.12
 @bruin"""
 

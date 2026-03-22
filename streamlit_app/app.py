@@ -40,6 +40,23 @@ st.set_page_config(
 st.markdown(
     """
 <style>
+    .block-container {
+        padding-top: 1.2rem;
+        padding-bottom: 2rem;
+    }
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #161b22 0%, #1c2128 100%);
+        border-right: 1px solid #30363d;
+    }
+    .insight-strip {
+        background: linear-gradient(90deg, rgba(34, 201, 155, 0.12) 0%, rgba(88, 166, 255, 0.08) 100%);
+        border: 1px solid #2f4442;
+        border-radius: 10px;
+        padding: 8px 12px;
+        margin-bottom: 0.9rem;
+        color: #b8c7d9;
+        font-size: 0.88rem;
+    }
     .section-header {
         font-size: 1.15rem;
         font-weight: 600;
@@ -54,6 +71,10 @@ st.markdown(
         border-radius: 10px;
         padding: 16px 20px;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+    div[data-testid="metric-container"]:hover {
+        border-color: #3e5060;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38);
     }
     div[data-testid="metric-container"] label {
         color: #8d9dbd !important;
@@ -73,6 +94,28 @@ st.markdown(
     }
     .stTabs [aria-selected="true"] {
         color: #22c99b !important;
+    }
+    div[data-testid="stDataFrame"] {
+        border: 1px solid #30363d;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    @media (max-width: 900px) {
+        .block-container {
+            padding-top: 0.5rem;
+            padding-left: 0.8rem;
+            padding-right: 0.8rem;
+        }
+        div[data-testid="metric-container"] {
+            padding: 10px 12px;
+        }
+        div[data-testid="metric-container"] [data-testid="stMetricValue"] {
+            font-size: 1.35rem !important;
+        }
+        .stTabs [data-baseweb="tab"] {
+            padding: 6px 8px;
+            font-size: 0.83rem;
+        }
     }
 </style>
 """,
@@ -208,6 +251,15 @@ _PAPER = "#1c2128"
 _GRID = "#30363d"
 
 
+def _short_repo_name(repo_name: str, max_len: int = 28) -> str:
+    parts = repo_name.split("/")
+    if len(parts) >= 2:
+        label = f"{parts[-2]}/{parts[-1]}"
+    else:
+        label = repo_name
+    return label if len(label) <= max_len else f"{label[: max_len - 3]}..."
+
+
 def _layout(fig: go.Figure, height: int = 400) -> go.Figure:
     fig.update_layout(
         height=height,
@@ -216,8 +268,9 @@ def _layout(fig: go.Figure, height: int = 400) -> go.Figure:
         font=dict(family="Inter, sans-serif", color="#e6edf3"),
         margin=dict(l=10, r=10, t=36, b=10),
         legend=dict(bgcolor="rgba(0,0,0,0)", borderwidth=0),
+        hovermode="x unified",
         xaxis=dict(gridcolor=_GRID, zeroline=False),
-        yaxis=dict(gridcolor=_GRID, zeroline=False),
+        yaxis=dict(gridcolor=_GRID, zeroline=False, tickformat=",d"),
         hoverlabel=dict(bgcolor="#1c2128", font_color="#e6edf3"),
     )
     return fig
@@ -256,6 +309,9 @@ with st.sidebar:
         st.cache_data.clear()
         st.rerun()
 
+    st.markdown("### 🎛️ View Options")
+    compact_mode = st.toggle("Compact chart layout", value=False)
+
     st.divider()
     st.markdown("**Stack**")
     st.markdown("🔧 Bruin · BigQuery · GCS · Terraform")
@@ -264,6 +320,13 @@ with st.sidebar:
 
 start_str = str(start_date)
 end_str = str(end_date)
+
+CHART_SCALE = 0.82 if compact_mode else 1.0
+
+
+def _h(base: int) -> int:
+    return max(220, int(base * CHART_SCALE))
+
 
 st.markdown("# 🐙 GitHub Activity Analytics")
 st.markdown(
@@ -308,6 +371,43 @@ tab_overview, tab_repos, tab_lang = tabs[:3]
 tab_admin = tabs[3] if ENABLE_PIPELINE_TRIGGER else None
 
 with tab_overview:
+    if not df_type.empty:
+        daily_summary = (
+            df_type.groupby("event_date", as_index=False)
+            .agg(event_count=("event_count", "sum"))
+            .sort_values("event_date")
+        )
+        avg_daily = int(daily_summary["event_count"].mean())
+        peak_row = (
+            daily_summary.sort_values("event_count", ascending=False).iloc[0].to_dict()
+        )
+        peak_day = str(peak_row["event_date"])[:10]
+        peak_events = int(float(peak_row["event_count"]))
+        variability = daily_summary["event_count"].std() / max(avg_daily, 1)
+        s1, s2, s3 = st.columns(3)
+        s1.metric("Avg Daily Events", f"{avg_daily:,}")
+        s2.metric(
+            "Peak Day",
+            peak_day,
+            f"{peak_events:,}",
+        )
+        s3.metric("Day-to-Day Variability", f"{variability * 100:.2f}%")
+        dominant_type = (
+            df_type.groupby("event_type")["event_count"]
+            .sum()
+            .sort_values(ascending=False)
+        )
+        dom_share = dominant_type.iloc[0] / max(dominant_type.sum(), 1)
+        st.markdown(
+            (
+                '<div class="insight-strip">'
+                f"Top event type: <strong>{dominant_type.index[0]}</strong>"
+                f" ({dom_share * 100:.1f}% of events) · Daily volumes are stable in this window"
+                "</div>"
+            ),
+            unsafe_allow_html=True,
+        )
+
     col_l, col_r = st.columns(2)
 
     with col_l:
@@ -329,24 +429,35 @@ with tab_overview:
                 template=_TEMPLATE,
             )
             fig.update_coloraxes(showscale=False)
-            st.plotly_chart(_layout(fig, 420), width="stretch")
+            st.plotly_chart(_layout(fig, _h(420)), width="stretch")
 
     with col_r:
-        _section("Daily Event Volume")
+        _section("Daily Event Mix (Top 6 Types)")
         if not df_type.empty:
-            daily = df_type.groupby("event_date", as_index=False).agg(
-                event_count=("event_count", "sum")
+            mix = df_type.copy()
+            top_mix_types = (
+                mix.groupby("event_type")["event_count"]
+                .sum()
+                .nlargest(6)
+                .index.tolist()
             )
-            daily["event_date"] = daily["event_date"].astype(str)
+            mix = mix[mix["event_type"].isin(top_mix_types)]
+            mix["event_date"] = mix["event_date"].astype(str)
             fig = px.bar(
-                daily,
+                mix,
                 x="event_date",
                 y="event_count",
-                labels={"event_count": "Events", "event_date": "Date"},
-                color_discrete_sequence=[_PRIMARY],
+                color="event_type",
+                labels={
+                    "event_date": "Date",
+                    "event_count": "Events",
+                    "event_type": "Type",
+                },
+                color_discrete_sequence=_COLOR_SEQ,
                 template=_TEMPLATE,
             )
-            st.plotly_chart(_layout(fig, 420), width="stretch")
+            fig.update_layout(barmode="stack")
+            st.plotly_chart(_layout(fig, _h(420)), width="stretch")
 
     _section("Hourly Activity Heatmap (UTC)")
     if not df_hour.empty:
@@ -365,7 +476,7 @@ with tab_overview:
             aspect="auto",
             template=_TEMPLATE,
         )
-        st.plotly_chart(_layout(fig, 250), width="stretch")
+        st.plotly_chart(_layout(fig, _h(240)), width="stretch")
 
     _section("Hourly Pattern (aggregated across all dates)")
     if not df_hour.empty:
@@ -381,55 +492,7 @@ with tab_overview:
             template=_TEMPLATE,
         )
         fig.update_xaxes(dtick=1)
-        st.plotly_chart(_layout(fig, 320), width="stretch")
-
-    _section("Event Types Over Time")
-    if not df_type.empty:
-        df_t = df_type.copy()
-        df_t["event_date"] = df_t["event_date"].astype(str)
-        top_types = (
-            df_t.groupby("event_type")["event_count"].sum().nlargest(8).index.tolist()
-        )
-        df_t_top = df_t[df_t["event_type"].isin(top_types)]
-        fig = px.line(
-            df_t_top,
-            x="event_date",
-            y="event_count",
-            color="event_type",
-            labels={
-                "event_count": "Events",
-                "event_date": "Date",
-                "event_type": "Type",
-            },
-            markers=True,
-            color_discrete_sequence=_COLOR_SEQ,
-            template=_TEMPLATE,
-        )
-        st.plotly_chart(_layout(fig, 360), width="stretch")
-
-    _section("Daily Event Mix")
-    if not df_type.empty:
-        mix = df_type.copy()
-        mix["event_date"] = mix["event_date"].astype(str)
-        top_mix_types = (
-            mix.groupby("event_type")["event_count"].sum().nlargest(6).index.tolist()
-        )
-        mix = mix[mix["event_type"].isin(top_mix_types)]
-        fig = px.bar(
-            mix,
-            x="event_date",
-            y="event_count",
-            color="event_type",
-            labels={
-                "event_date": "Date",
-                "event_count": "Events",
-                "event_type": "Type",
-            },
-            color_discrete_sequence=_COLOR_SEQ,
-            template=_TEMPLATE,
-        )
-        fig.update_layout(barmode="stack")
-        st.plotly_chart(_layout(fig, 360), width="stretch")
+        st.plotly_chart(_layout(fig, _h(320)), width="stretch")
 
 with tab_repos:
     if df_repos.empty:
@@ -448,6 +511,17 @@ with tab_repos:
             )
             .sort_values("total_events", ascending=False)
         )
+        repos_agg["repo_short"] = repos_agg["repo_name"].apply(_short_repo_name)
+
+        top_repo = repos_agg.iloc[0]
+        top10_share = repos_agg.head(10)["total_events"].sum() / max(
+            repos_agg["total_events"].sum(), 1
+        )
+        median_events = int(repos_agg["total_events"].median())
+        r1, r2, r3 = st.columns(3)
+        r1.metric("Most Active Repo", top_repo["repo_short"])
+        r2.metric("Top 10 Activity Share", f"{top10_share * 100:.1f}%")
+        r3.metric("Median Repo Events", f"{median_events:,}")
 
         col_chart, col_table = st.columns([1, 1])
 
@@ -457,15 +531,16 @@ with tab_repos:
             fig = px.bar(
                 top20,
                 x="total_events",
-                y="repo_name",
+                y="repo_short",
                 orientation="h",
-                labels={"total_events": "Total Events", "repo_name": ""},
+                labels={"total_events": "Total Events", "repo_short": ""},
                 color="total_events",
                 color_continuous_scale="Viridis",
                 template=_TEMPLATE,
+                hover_data={"repo_name": True},
             )
             fig.update_coloraxes(showscale=False)
-            st.plotly_chart(_layout(fig, 520), width="stretch")
+            st.plotly_chart(_layout(fig, _h(520)), width="stretch")
 
         with col_table:
             _section("Activity Details")
@@ -479,8 +554,14 @@ with tab_repos:
                 "🔀 PRs",
                 "🐛 Issues",
                 "👥 Contributors",
+                "Repo Label",
             ]
-            st.dataframe(display, width="stretch", height=500, hide_index=True)
+            st.dataframe(
+                display.drop(columns=["Repo Label"]),
+                width="stretch",
+                height=_h(500),
+                hide_index=True,
+            )
 
         _section("Activity Breakdown — Top 10 Repos")
         top10 = repos_agg.head(10)
@@ -495,13 +576,13 @@ with tab_repos:
             fig.add_trace(
                 go.Bar(
                     name=label,
-                    x=top10["repo_name"],
+                    x=top10["repo_short"],
                     y=top10[metric],
                     marker_color=color,
                 )
             )
         fig.update_layout(barmode="stack", template=_TEMPLATE, xaxis_tickangle=-30)
-        st.plotly_chart(_layout(fig, 400), width="stretch")
+        st.plotly_chart(_layout(fig, _h(400)), width="stretch")
 
         _section("Repository Activity Treemap")
         treemap_df = repos_agg.head(40).copy()
@@ -536,7 +617,7 @@ with tab_repos:
         fig.update_layout(
             margin=dict(t=30, l=0, r=0, b=0), coloraxis_colorbar_title="Contributors"
         )
-        st.plotly_chart(_layout(fig, 500), width="stretch")
+        st.plotly_chart(_layout(fig, _h(500)), width="stretch")
 
 with tab_lang:
     st.caption(
@@ -555,6 +636,22 @@ with tab_lang:
             .sort_values("push_count", ascending=False)
         )
 
+        top_lang = lang_agg.iloc[0]
+        top_share = top_lang["push_count"] / max(lang_agg["push_count"].sum(), 1)
+        l1, l2, l3 = st.columns(3)
+        l1.metric("Dominant Language", top_lang["repo_language"])
+        l2.metric("Dominant Share", f"{top_share * 100:.1f}%")
+        l3.metric("Tracked Languages", f"{lang_agg.shape[0]}")
+        st.markdown(
+            (
+                '<div class="insight-strip">'
+                "Language attribution is inferred from repository naming patterns; "
+                "use this as directional signal rather than exact repository metadata"
+                "</div>"
+            ),
+            unsafe_allow_html=True,
+        )
+
         col1, col2 = st.columns(2)
 
         with col1:
@@ -570,55 +667,23 @@ with tab_lang:
                 template=_TEMPLATE,
             )
             fig.update_layout(showlegend=False)
-            st.plotly_chart(_layout(fig, 400), width="stretch")
+            st.plotly_chart(_layout(fig, _h(400)), width="stretch")
 
         with col2:
-            _section("Inferred Language Share")
-            fig = px.pie(
+            _section("Contributors vs Push Activity")
+            fig = px.scatter(
                 lang_agg,
-                values="push_count",
-                names="repo_language",
-                hole=0.5,
+                x="contributors",
+                y="push_count",
+                text="repo_language",
+                size="push_count",
+                labels={"push_count": "Pushes", "contributors": "Contributors"},
+                color="repo_language",
                 color_discrete_sequence=_COLOR_SEQ,
                 template=_TEMPLATE,
             )
-            fig.update_traces(textposition="outside", textinfo="label+percent")
-            st.plotly_chart(_layout(fig, 400), width="stretch")
-
-        _section("Inferred Language Activity Over Time")
-        top_langs = lang_agg.head(6)["repo_language"].tolist()
-        df_lang_top = df_lang[df_lang["repo_language"].isin(top_langs)].copy()
-        df_lang_top["event_date"] = df_lang_top["event_date"].astype(str)
-        fig = px.line(
-            df_lang_top,
-            x="event_date",
-            y="push_count",
-            color="repo_language",
-            labels={
-                "push_count": "Pushes",
-                "event_date": "Date",
-                "repo_language": "Language",
-            },
-            markers=True,
-            color_discrete_sequence=_COLOR_SEQ,
-            template=_TEMPLATE,
-        )
-        st.plotly_chart(_layout(fig, 360), width="stretch")
-
-        _section("Contributors vs Push Activity")
-        fig = px.scatter(
-            lang_agg,
-            x="contributors",
-            y="push_count",
-            text="repo_language",
-            size="push_count",
-            labels={"push_count": "Pushes", "contributors": "Contributors"},
-            color="repo_language",
-            color_discrete_sequence=_COLOR_SEQ,
-            template=_TEMPLATE,
-        )
-        fig.update_traces(textposition="top center")
-        st.plotly_chart(_layout(fig, 380), width="stretch")
+            fig.update_traces(textposition="top center")
+            st.plotly_chart(_layout(fig, _h(400)), width="stretch")
 
 if tab_admin is not None:
     with tab_admin:

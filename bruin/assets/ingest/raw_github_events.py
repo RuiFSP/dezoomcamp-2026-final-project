@@ -1,6 +1,7 @@
 """@bruin
 name: ingest.raw_github_events
 description: "Load GitHub Archive NDJSON from GCS into BigQuery raw table (data warehouse layer)"
+owner: data-platform
 image: python:3.12
 depends:
     - ingest.fetch_to_gcs

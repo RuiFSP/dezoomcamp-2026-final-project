@@ -372,20 +372,20 @@ if gcs_hour_object_exists(f"{date}/{hour}"):
    - Trigger alerts if pipeline fails or data quality check fails
    - Define SLOs (e.g., "pipeline completes by 11 AM UTC daily")
 
-2. **Data Lineage & Governance**
+3. **Data Lineage & Governance**
    - Integrate with Data Catalog for asset discovery
    - Document business logic (why is hour_of_day capped at 23?)
    - Create runbooks for common failures
 
-3. **Performance Monitoring**
+4. **Performance Monitoring**
    - Track query cost and execution time trends
    - Set budgets and alerts for cost overruns
 
-4. **Incremental Processing**
+5. **Incremental Processing**
    - Implement incremental staging (only process new hourly archives)
    - Pre-aggregate hourly marts to reduce downstream query cost
 
-5. **Testing in Production**
+6. **Testing in Production**
    - Deploy to a staging GCP project; validate before applying to prod
    - Use Terraform workspaces for environment separation
 

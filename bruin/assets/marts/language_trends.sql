@@ -1,7 +1,8 @@
 /* @bruin
 name: gh_analytics.language_trends
 type: bq.sql
-description: GitHub activity trends aggregated by programming language (inferred from repository name)
+description: GitHub activity trends aggregated by programming language
+owner: data-platform
 materialization:
     type: table
     partition_by: event_date
@@ -13,11 +14,13 @@ columns:
     - name: event_date
       type: DATE
       description: Date of the event (UTC)
+      primary_key: true
       checks:
           - name: not_null
     - name: repo_name
       type: STRING
       description: Full repository name in format owner/repo
+      primary_key: true
       checks:
           - name: not_null
     - name: push_count
@@ -30,6 +33,11 @@ columns:
       description: Distinct users who pushed to this repository
       checks:
           - name: positive
+custom_checks:
+    - name: language trend rows exist
+      description: language_trends should produce at least one row per run window
+      query: "SELECT CASE WHEN COUNT(*) > 0 THEN 0 ELSE 1 END FROM {{ var.current_dataset }}.language_trends"
+      value: 0
 @bruin */
 
 -- Language is inferred from the repository name suffix (best-effort).

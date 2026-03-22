@@ -2,6 +2,7 @@
 name: gh_analytics.events_by_hour
 type: bq.sql
 description: GitHub events aggregated by day and hour of day (UTC), with daily unique actor counts
+owner: data-platform
 materialization:
     type: table
     partition_by: event_date
@@ -13,11 +14,13 @@ columns:
     - name: event_date
       type: DATE
       description: Date of the event (UTC)
+      primary_key: true
       checks:
           - name: not_null
     - name: hour_of_day
       type: INTEGER
       description: Hour of day in UTC (0-23)
+      primary_key: true
       checks:
           - name: not_null
           - name: non_negative

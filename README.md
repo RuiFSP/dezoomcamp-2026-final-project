@@ -21,8 +21,10 @@
 - [Architectural Decisions](#architectural-decisions)
 - [Data Engineering Best Practices](#data-engineering-best-practices)
 - [Environments](#environments)
+- [Execution Modes](#execution-modes)
 - [Quick Start](#quick-start)
 - [Streamlit Deployment](#streamlit-deployment)
+- [Post-Backfill Operations](#post-backfill-operations)
 - [CI/CD Pipeline](#cicd-pipeline)
 - [Dashboard Scope](#dashboard-scope)
 - [Security](#security)
@@ -263,6 +265,15 @@ See [ENGINEERING.md](./ENGINEERING.md) for deeper technical details and trade-of
 | staging | stg_gh_analytics |
 | prod | gh_analytics |
 
+## Execution Modes
+
+This project supports both execution paths:
+
+- **Local / self-managed (default in this repo):** run the pipeline with `make run-*` or `bruin run` from your machine or CI.
+- **Bruin Cloud (optional):** connect the same repo to Bruin Cloud for managed scheduling, run monitoring, lineage UI, and governance dashboards.
+
+Both modes use the same pipeline code (`bruin/pipeline.yml` + `bruin/assets/**`). You can keep local runs for development while using Bruin Cloud for managed orchestration.
+
 ## Quick Start
 
 ### 1. Prerequisites
@@ -364,11 +375,15 @@ make run-prod        # full day, production dataset
 
 #### Backfilling multiple days
 
-To load more than one day of historical data, use the `backfill-dev` / `backfill-prod` Makefile targets with explicit date bounds:
+To load more than one day of historical data, use the `backfill-dev` / `backfill-stg` /
+`backfill-prod` Makefile targets with explicit date bounds:
 
 ```bash
 # Load 7 days into dev
 make backfill-dev DATE_FROM=2026-03-14 DATE_TO=2026-03-20
+
+# Promote the same 7 days into staging
+make backfill-stg DATE_FROM=2026-03-14 DATE_TO=2026-03-20
 
 # Load 7 days into production
 make backfill-prod DATE_FROM=2026-03-14 DATE_TO=2026-03-20
@@ -407,6 +422,28 @@ make app-url
 ```
 
 The app reads the mart tables from `gh_analytics` by default.
+
+## Post-Backfill Operations
+
+After a historical catch-up (for example, `dev -> staging -> prod`), use this sequence:
+
+1. **Validate completeness in each environment**
+    - Verify `stg_github_events` and `events_by_hour` have all expected days/hours.
+2. **Commit code/config/docs changes first**
+    - If pipeline logic, checks, or docs changed during the operation, commit them before any app deploy.
+3. **Decide whether Streamlit needs a redeploy**
+    - **No redeploy needed** for data-only backfills: the app reads BigQuery tables live.
+    - **Redeploy needed** only when app code, dependencies, runtime env vars, or Cloud Run/Terraform config changed.
+4. **Refresh dashboard data cache**
+    - Streamlit query cache uses `ttl=300` (about 5 minutes).
+    - You can also use the app's refresh action to clear cache immediately.
+
+Recommended production order:
+
+1. Run backfills and quality checks (`dev`, then `staging`, then `prod`).
+2. Validate row/hour completeness.
+3. Commit and push repository changes.
+4. Redeploy Streamlit only if there were app/runtime/config changes.
 
 If you manage Cloud Run spend limits via Terraform, note that the `google_billing_budget`
 resource requires billing-account-level permissions and the Billing Budgets API enabled.
