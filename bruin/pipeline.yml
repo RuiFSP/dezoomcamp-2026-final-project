@@ -1,6 +1,10 @@
 name: github-analytics
 schedule: "@daily"
 start_date: "2025-01-01"
+catchup: false
+
+metadata_push:
+  bigquery: true
 
 default_connections:
   google_cloud_platform: "bigquery-default"
