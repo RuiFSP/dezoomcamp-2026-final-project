@@ -328,7 +328,8 @@ The **`.bruin.yml`** file reads `GCP_PROJECT_ID` and `GCP_REGION` from your envi
 In **`terraform/terraform.tfvars`**, update at minimum:
 - `project_id` — your GCP project ID
 - `bucket_name` — must be globally unique
-- `billing_account_id` — optional, only needed for budget alerts
+- `enable_billing_budget` — optional, default `false`; set to `true` only if you want Terraform to manage budgets
+- `billing_account_id` — required only when `enable_billing_budget=true`
 
 ### 4. Authenticate with GCP
 
@@ -422,6 +423,10 @@ make app-url
 ```
 
 The app reads the mart tables from `gh_analytics` by default.
+
+If Terraform apply fails with a billing-budget permission error, keep
+`enable_billing_budget=false` in `terraform/terraform.tfvars` (default) and
+deploy Cloud Run without Terraform-managed budget resources.
 
 ## Post-Backfill Operations
 
