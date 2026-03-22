@@ -49,9 +49,13 @@ The pipeline ingests hourly NDJSON archives from gharchive.org, lands them in a 
 
 The Streamlit application has been deployed to Cloud Run and is available for reviewer demonstration upon request. Screenshots below show the dashboard interface and deployment proof.
 
-| Event Overview | Top Repositories |
+| Event Overview (Summary) | Top Repositories (Summary) |
 |---|---|
-| ![Event Overview](docs/screenshots/01_event_overview.png) | ![Top Repositories](docs/screenshots/02_top_repositories.png) |
+| ![Event Overview Summary](docs/screenshots/01_event_overview_0.png) | ![Top Repositories Summary](docs/screenshots/02_top_repositories_0.png) |
+
+| Event Overview (Detailed) | Top Repositories (Detailed) |
+|---|---|
+| ![Event Overview Detailed](docs/screenshots/01_event_overview_1.png) | ![Top Repositories Detailed](docs/screenshots/02_top_repositories_1.png) |
 
 | Language Signals |
 |---|
@@ -69,9 +73,11 @@ The Streamlit application has been deployed to Cloud Run and is available for re
 flowchart LR
     SRC["gharchive.org\nHourly NDJSON (.gz)"]
 
-    subgraph ORCH["Pipeline & Infrastructure"]
-        BRUIN["Bruin CLI\nIngestion + SQL + Data Checks"]
-        TF["Terraform\nGCP Infrastructure as Code"]
+    subgraph ORCH["Orchestration & Delivery"]
+        BRUIN["Bruin CLI\nLocal/CI execution"]
+        BCLOUD["Bruin Cloud (optional)\nManaged schedules + run monitor"]
+        TF["Terraform\nInfrastructure as Code"]
+        GCLOUD["gcloud run deploy\nOperational fallback"]
         CI["GitHub Actions\nTests + Quality Gates"]
     end
 
@@ -96,16 +102,25 @@ flowchart LR
 
     TF -->|provisions| GCS
     TF -->|provisions| WH
-    TF -->|provisions| APP
+    TF -->|provisions/updates| APP
+    GCLOUD -->|direct deploy/update| APP
 
     SRC -->|hourly fetch| BRUIN
+    SRC -->|hourly fetch (managed)| BCLOUD
     BRUIN -->|lands raw files| GCS
+    BCLOUD -->|lands raw files| GCS
     BRUIN -->|loads raw data| RAW
+    BCLOUD -->|loads raw data| RAW
     BRUIN -->|staging SQL| STG
+    BCLOUD -->|staging SQL| STG
     BRUIN -->|mart SQL| M1
     BRUIN -->|mart SQL| M2
     BRUIN -->|mart SQL| M3
     BRUIN -->|mart SQL| M4
+    BCLOUD -->|mart SQL| M1
+    BCLOUD -->|mart SQL| M2
+    BCLOUD -->|mart SQL| M3
+    BCLOUD -->|mart SQL| M4
 
     M1 --> APP
     M2 --> APP
@@ -115,6 +130,10 @@ flowchart LR
     USER -->|HTTPS| APP
     CI -->|validates repository changes| BRUIN
 ```
+
+The repo's default path is **Bruin CLI + Terraform**. **Bruin Cloud** is optional and uses the same pipeline code.
+For app rollouts, Terraform is the primary path; direct `gcloud run deploy` is a documented operational fallback when
+billing-budget permissions block Terraform applies.
 
 ## Stack
 
