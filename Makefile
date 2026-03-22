@@ -48,6 +48,11 @@ backfill-dev:
 	  --start-date $(DATE_FROM) --end-date $(DATE_TO) \
 	  --var '{"current_dataset":"dev_gh_analytics"}' bruin/
 
+backfill-stg:
+	@$(LOAD_ENV) $(BRUIN) run --environment staging \
+	  --start-date $(DATE_FROM) --end-date $(DATE_TO) \
+	  --var '{"current_dataset":"stg_gh_analytics"}' bruin/
+
 backfill-prod:
 	@$(LOAD_ENV) $(BRUIN) run --environment prod --force \
 	  --start-date $(DATE_FROM) --end-date $(DATE_TO) \
@@ -135,7 +140,7 @@ app-url:
 
 .PHONY: ingest-dev ingest-stg ingest-prod \
 	run-dev run-dev-smoke run-stg run-prod \
-        backfill-dev backfill-prod \
+	backfill-dev backfill-stg backfill-prod \
         test-dev test-stg test-prod \
         test test-cov \
         infra-plan infra-apply infra-destroy \
