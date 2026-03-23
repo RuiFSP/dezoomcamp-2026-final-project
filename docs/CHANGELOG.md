@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented in this file.
 
+## [v1.1.0] - 2026-03-23
+
+### Added
+- Full Bruin Cloud execution support using the same pipeline codebase as local CLI runs.
+- Cloud proof screenshots for run started and run finished states.
+- README top banner image and execution-mode documentation for local, UI-triggered, and CLI-triggered managed runs.
+
+### Changed
+- Documentation now reflects validated Bruin Cloud operations instead of listing Cloud integration as pending.
+- `README` examples now use a generic Bruin Cloud project ID placeholder instead of a hardcoded project-specific ID.
+- Engineering next steps were re-scoped to focus on true production-scale improvements (alerting, governance, performance, incremental processing, and staging validation).
+
+### Fixed
+- Ingestion gzip decompression now streams in chunks to prevent `OOMKilled` failures on longer managed Cloud intervals.
+- Bruin Cloud run screenshot references normalized to `started` and `finished` naming.
+
+### Operational Validation
+- Managed Bruin Cloud run succeeded for the full daily interval `2026-03-22 00:00:00 -> 2026-03-23 00:00:00` in `00:10:47`.
+- Validation covered all 7 assets with all 29 quality checks passing.
+
 ## [v1.0.0] - 2026-03-22
 
 ### Added
