@@ -358,6 +358,13 @@ if gcs_hour_object_exists(f"{date}/{hour}"):
 - **Resolution:** Parameterized all SQL references using `{{ var.current_dataset }}` in Bruin. Enforced via linting (ruff, pre-commit).
 - **Takeaway:** Use templating/variable injection for all environment-specific values. Make hardcoding difficult or impossible.
 
+### 7. Bruin Cloud Free Tier Has Hidden Constraints
+
+- **Lesson:** Bruin Cloud free tier does not expose the "Developer Environment Secret" UI for injecting plain env vars, and triggered runs may remain `queued` indefinitely without executing.
+- **Event:** After connecting the project and triggering multiple runs, all stayed `queued` and never transitioned to `running`. Additionally, the Bruin Cloud project was originally connected to the wrong branch (`feature/bruin-cloud` instead of `main`), which meant Cloud always executed stale code.
+- **Resolution:** Refactored ingestion to use the `bigquery-default` GCP connection (the only Cloud-injected credential available on free tier). Corrected the branch to `main` and provided a GitHub PAT for repo access. Pipeline now syncs correctly — but execution remains unresolved on the free tier.
+- **Takeaway:** When integrating with a managed orchestration platform, verify early (before building) which runtime features (secrets injection, compute workers, scheduling) are available on the tier you're using. Document the gap explicitly so reviewers understand what is and isn't validated in the Cloud.
+
 ---
 
 ## Next Steps (If Scaling to Production)
@@ -365,11 +372,15 @@ if gcs_hour_object_exists(f"{date}/{hour}"):
 > **None of the items below were implemented.** This section documents potential future improvements for a production-grade system. The project is a learning/submission pipeline and intentionally stops here.
 
 1. **Bruin Cloud**
-    - **Partially validated:** Bruin Cloud was connected successfully (GitHub repo + `bigquery-default` GCP connection), and runs can be triggered from local CLI via `bruin cloud runs trigger`.
-    - **Current blocker:** Triggered runs remained in `queued` state in this team/workspace and did not transition to `running`, so end-to-end managed execution is not yet verified.
-    - **What is verified today:** direct local CLI execution works end-to-end, including one-hour smoke runs (`GH_ARCHIVE_START_HOUR=0`, `GH_ARCHIVE_MAX_HOURS=1`).
-   - Bruin Cloud adds: automatic scheduling, a web-based run monitor, interactive column-level lineage, table/column health checks UI, cost & usage reports, and managed secrets — all connected directly to this Git repo.
-    - Next validation step: push latest pipeline changes, trigger again, and confirm `queued -> running -> succeeded`.
+    - **Refactored for Cloud runtime:** ingestion code was fully refactored to use Bruin-injected GCP credentials (`bigquery-default` connection via `BRUIN_GCP_CONNECTION` env var) instead of raw env vars, since the "Developer Environment Secret" UI is not available on the free tier.
+    - **Pipeline variables** (`current_dataset`, `gcs_bucket_name`) are now declared in `bruin/pipeline.yml` and resolved at runtime via `BRUIN_VARS` JSON injection.
+    - **Hour window derivation:** the asset automatically derives the target hour from `BRUIN_START_TIMESTAMP`/`BRUIN_END_TIMESTAMP` when running under Bruin Cloud, with fallback to env vars and hardcoded defaults for local runs.
+    - **Repo branch corrected:** the Bruin Cloud project was originally connected to `feature/bruin-cloud`; after merging the refactor PR to `main`, the project was recreated pointing at `main` (new project ID: `dezoomcamp-2026-final-project-69c122c047f3a`). A GitHub PAT was required to allow the git-sync agent to clone the private repo.
+    - **Pipeline synced to `main`:** after providing the PAT, the pipeline synced to commit `2120464` (the PR merge commit), including `gcs_bucket_name` variable and correct `secrets` injection in both Python asset headers.
+    - **Current blocker:** triggered runs (including the post-refactor test run at `2026-03-23T11:31:05Z`) remain in `queued` state and do not transition to `running`. Suspected cause: free-tier Bruin Cloud does not provision on-demand compute workers. No pipeline validation errors are present.
+    - **What is verified:** direct local CLI execution works end-to-end, including one-hour smoke runs (`GH_ARCHIVE_START_HOUR=0`, `GH_ARCHIVE_MAX_HOURS=1`). All 36 automated tests pass.
+    - Bruin Cloud adds: automatic scheduling, a web-based run monitor, interactive column-level lineage, table/column health checks UI, cost & usage reports, and managed secrets — all connected directly to this Git repo.
+    - Next validation step: confirm whether free-tier supports on-demand execution; if not, escalate to Bruin support or upgrade tier.
 
 2. **Alerting & SLOs**
    - Export data quality check results to Cloud Logging
