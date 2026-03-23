@@ -291,7 +291,8 @@ def fetch_github_archive(date: str, hour: int, output_path: str) -> bool:
 
     with open(output_path, "wb") as f:
         with gzip.GzipFile(fileobj=response.raw) as gz:
-            f.write(gz.read())
+            while chunk := gz.read(8 * 1024 * 1024):
+                f.write(chunk)
 
     size_mb = Path(output_path).stat().st_size / (1024 * 1024)
     logger.info(f"Downloaded {size_mb:.1f}MB → {output_path}")
