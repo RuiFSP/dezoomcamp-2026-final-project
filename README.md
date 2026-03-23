@@ -10,6 +10,10 @@
 ![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
 [![Tests](https://github.com/RuiFSP/dezoomcamp-2026-final-project/actions/workflows/test.yml/badge.svg)](https://github.com/RuiFSP/dezoomcamp-2026-final-project/actions/workflows/test.yml)
 
+<p align="center">
+    <img src="docs/screenshots/00_header_final.jpg" alt="Project Header" width="1100" />
+</p>
+
 ## Table of Contents
 
 - [Problem Description](#problem-description)
@@ -69,7 +73,7 @@ The Streamlit application has been deployed to Cloud Run and is available for re
 
 | Bruin Cloud Run Started | Bruin Cloud Run Succeeded |
 |---|---|
-| ![Bruin Cloud Run Started](docs/screenshots/07_bruin_cloud_run_start.PNG) | ![Bruin Cloud Run Succeeded](docs/screenshots/07_bruin_cloud_run_finished.PNG) |
+| ![Bruin Cloud Run Started](docs/screenshots/07_bruin_cloud_run_started.PNG) | ![Bruin Cloud Run Succeeded](docs/screenshots/07_bruin_cloud_run_finished.PNG) |
 
 Bruin Cloud is now validated for this repository as well: the same pipeline can be executed locally with the Bruin CLI, triggered remotely from the Bruin Cloud UI, or triggered remotely from a local machine with `bruin cloud runs trigger`. A full managed 24-hour run completed successfully for the interval `2026-03-22 00:00:00 -> 2026-03-23 00:00:00` in `00:10:47`.
 
@@ -406,13 +410,15 @@ After connecting the repository in Bruin Cloud and setting `BRUIN_CLOUD_API_KEY`
 
 ```bash
 bruin cloud runs trigger \
-    -p dezoomcamp-2026-final-project-69c122c047f3a \
+    -p YOUR_BRUIN_CLOUD_PROJECT_ID \
     --pipeline github-analytics \
     --start-date 2026-03-22T00:00:00Z \
     --end-date 2026-03-22T01:00:00Z
 ```
 
 The same interval can also be triggered from the Bruin Cloud UI with the `re-run` / trigger controls.
+
+Use `bruin cloud projects list` to find your project ID.
 
 #### Backfilling multiple days
 
@@ -541,7 +547,7 @@ Safe-to-commit examples are included in:
 
 ## Notes
 
-- **Bruin Cloud**: This pipeline is ready to be connected to [Bruin Cloud](https://cloud.getbruin.com/register) — a managed platform that adds automatic scheduling, a web run monitor, column-level lineage, data quality dashboards, and cost reporting on top of the same `pipeline.yml` and `bruin/` assets, with no code changes required.
+- **Bruin Cloud**: This pipeline is connected and validated on [Bruin Cloud](https://cloud.getbruin.com/register), including UI-triggered runs and local CLI-triggered managed runs (`bruin cloud runs trigger`).
 - The raw ingestion uses hourly files in GCS to make retries and backfills resumable.
 - The BigQuery raw table reload is idempotent per date.
 - The Cloud Run deployment can be destroyed via `terraform destroy` to avoid ongoing costs. Contact the author for a live demo if needed.

@@ -371,36 +371,25 @@ if gcs_hour_object_exists(f"{date}/{hour}"):
 
 > **None of the items below were implemented.** This section documents potential future improvements for a production-grade system. The project is a learning/submission pipeline and intentionally stops here.
 
-1. **Bruin Cloud**
-    - **Validated managed execution:** the pipeline now runs in Bruin Cloud in addition to local CLI execution. A managed full-day run (`2026-03-22 00:00:00 -> 2026-03-23 00:00:00`) completed successfully in `00:10:47` with all 7 assets and all 29 quality checks passing.
-    - **Three supported execution modes:** local `bruin run`, Bruin Cloud UI-triggered runs, and local CLI-triggered remote runs via `bruin cloud runs trigger`.
-    - **Refactored for Cloud runtime:** ingestion code uses Bruin-injected GCP credentials (`bigquery-default` via `BRUIN_GCP_CONNECTION`) instead of depending on raw environment-variable secrets.
-    - **Pipeline variables** (`current_dataset`, `gcs_bucket_name`) are declared in `bruin/pipeline.yml` and resolved via `BRUIN_VARS` JSON injection.
-    - **Hour window derivation:** the asset derives the target hour window from `BRUIN_START_TIMESTAMP`/`BRUIN_END_TIMESTAMP` in managed runs, with local env-var fallback for smoke tests and self-managed execution.
-    - **Repo and project alignment:** the Bruin Cloud project was recreated against `main` (project ID: `dezoomcamp-2026-final-project-69c122c047f3a`) and required a GitHub PAT so the git-sync agent could clone the repository.
-    - **Memory fix for larger intervals:** a scheduled full-day run exposed an `OOMKilled` issue in gzip decompression; this was fixed by streaming decompression in chunks, which is now deployed on `main` and synced to Bruin Cloud.
-    - **What is verified:** local smoke runs work, local CLI-triggered Cloud runs work, Bruin Cloud UI-triggered runs work, and the same repository can execute both short smoke intervals and full-day managed intervals successfully.
-    - Bruin Cloud adds: automatic scheduling, a web-based run monitor, interactive column-level lineage, table/column health checks UI, cost & usage reports, and managed secrets — all connected directly to this Git repo.
-
-2. **Alerting & SLOs**
+1. **Alerting & SLOs**
    - Export data quality check results to Cloud Logging
    - Trigger alerts if pipeline fails or data quality check fails
    - Define SLOs (e.g., "pipeline completes by 11 AM UTC daily")
 
-3. **Data Lineage & Governance**
+2. **Data Lineage & Governance**
    - Integrate with Data Catalog for asset discovery
    - Document business logic (why is hour_of_day capped at 23?)
    - Create runbooks for common failures
 
-4. **Performance Monitoring**
+3. **Performance Monitoring**
    - Track query cost and execution time trends
    - Set budgets and alerts for cost overruns
 
-5. **Incremental Processing**
+4. **Incremental Processing**
    - Implement incremental staging (only process new hourly archives)
    - Pre-aggregate hourly marts to reduce downstream query cost
 
-6. **Testing in Production**
+5. **Testing in Production**
    - Deploy to a staging GCP project; validate before applying to prod
    - Use Terraform workspaces for environment separation
 
