@@ -67,6 +67,12 @@ The Streamlit application has been deployed to Cloud Run and is available for re
 |---|---|
 | ![BigQuery Proof](docs/screenshots/04_google_big_query.png) | ![Cloud Run Proof](docs/screenshots/05_deployed_streamlit.png) |
 
+| Bruin Cloud Run Started | Bruin Cloud Run Succeeded |
+|---|---|
+| ![Bruin Cloud Run Started](docs/screenshots/07_bruin_cloud_run_start.PNG) | ![Bruin Cloud Run Succeeded](docs/screenshots/07_bruin_cloud_run_finished.PNG) |
+
+Bruin Cloud is now validated for this repository as well: the same pipeline can be executed locally with the Bruin CLI, triggered remotely from the Bruin Cloud UI, or triggered remotely from a local machine with `bruin cloud runs trigger`. A full managed 24-hour run completed successfully for the interval `2026-03-22 00:00:00 -> 2026-03-23 00:00:00` in `00:10:47`.
+
 ## Architecture
 
 ```mermaid
@@ -140,7 +146,7 @@ billing-budget permissions block Terraform applies.
 | Layer | Tool |
 |---|---|
 | Infrastructure | Terraform |
-| Orchestration | Bruin CLI |
+| Orchestration | Bruin CLI + Bruin Cloud |
 | Language | Python 3.12 |
 | Package management | uv |
 | Data lake | GCS |
@@ -286,12 +292,13 @@ See [ENGINEERING.md](./docs/ENGINEERING.md) for deeper technical details and tra
 
 ## Execution Modes
 
-This project supports both execution paths:
+This project now supports three practical execution paths using the same pipeline code:
 
-- **Local / self-managed (default in this repo):** run the pipeline with `make run-*` or `bruin run` from your machine or CI.
-- **Bruin Cloud (optional):** connect the same repo to Bruin Cloud for managed scheduling, run monitoring, lineage UI, and governance dashboards.
+- **Local execution:** run the pipeline with `make run-*` or `bruin run` from your machine or CI.
+- **Bruin Cloud UI execution:** trigger runs directly from the Bruin Cloud web UI and use the managed run monitor, lineage, and quality-check views.
+- **Local CLI -> Bruin Cloud execution:** use `bruin cloud runs trigger` from your machine to start a managed Cloud run remotely.
 
-Both modes use the same pipeline code (`bruin/pipeline.yml` + `bruin/assets/**`). You can keep local runs for development while using Bruin Cloud for managed orchestration.
+All three modes use the same pipeline code (`bruin/pipeline.yml` + `bruin/assets/**`). Managed Bruin Cloud execution has been validated successfully for this repository, including a full 24-hour run with all 7 assets and all 29 quality checks passing.
 
 ## Quick Start
 
@@ -392,6 +399,20 @@ make run-dev         # full day, dev dataset
 make run-stg         # full day, staging dataset
 make run-prod        # full day, production dataset
 ```
+
+#### Trigger a managed Bruin Cloud run from your local machine
+
+After connecting the repository in Bruin Cloud and setting `BRUIN_CLOUD_API_KEY` in `.env`, you can trigger the managed pipeline remotely from your terminal:
+
+```bash
+bruin cloud runs trigger \
+    -p dezoomcamp-2026-final-project-69c122c047f3a \
+    --pipeline github-analytics \
+    --start-date 2026-03-22T00:00:00Z \
+    --end-date 2026-03-22T01:00:00Z
+```
+
+The same interval can also be triggered from the Bruin Cloud UI with the `re-run` / trigger controls.
 
 #### Backfilling multiple days
 
