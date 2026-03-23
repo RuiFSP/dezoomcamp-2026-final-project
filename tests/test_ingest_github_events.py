@@ -140,6 +140,21 @@ def test_resolve_hour_window_defaults_from_env():
     assert (start, count) == (2, 3)
 
 
+def test_resolve_hour_window_uses_bruin_run_interval():
+    with patch.dict(
+        "src.ingest_github_events.os.environ",
+        {
+            "BRUIN_START_TIMESTAMP": "2026-03-22T00:00:00Z",
+            "BRUIN_END_TIMESTAMP": "2026-03-22T01:00:00Z",
+            "BRUIN_VARS": "{}",
+        },
+        clear=True,
+    ):
+        start, count = resolve_hour_window()
+
+    assert (start, count) == (0, 1)
+
+
 def test_resolve_hour_window_invalid_raises():
     with pytest.raises(ValueError):
         resolve_hour_window(start_hour=23, max_hours=2)

@@ -274,7 +274,7 @@ A `.mcp.json` file is included at the project root, so VS Code / GitHub Copilot 
 
 ---
 
-See [ENGINEERING.md](./ENGINEERING.md) for deeper technical details and trade-off analysis.
+See [ENGINEERING.md](./docs/ENGINEERING.md) for deeper technical details and trade-off analysis.
 
 ## Environments
 

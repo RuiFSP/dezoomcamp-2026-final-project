@@ -24,6 +24,7 @@ from dotenv import load_dotenv
 from google.api_core.retry import Retry
 from google.cloud import bigquery, storage
 from google.cloud.exceptions import NotFound
+from google.oauth2 import service_account
 
 load_dotenv()
 
@@ -34,12 +35,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Config from environment
-PROJECT_ID = os.getenv("GCP_PROJECT_ID", "gh-dezoomcamp")
-BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "gh-dezoomcamp-raw-events")
-BQ_DATASET_ID = os.getenv("BQ_DATASET_ID", "gh_analytics")
+# Config from environment / Bruin runtime
+DEFAULT_PROJECT_ID = "gh-dezoomcamp"
+DEFAULT_BUCKET_NAME = "gh-dezoomcamp-raw-events"
+DEFAULT_DATASET_ID = "gh_analytics"
 BQ_TABLE_ID = "raw_github_events"
-REGION = os.getenv("GCP_REGION", "europe-west1")
+DEFAULT_REGION = "europe-west1"
 GCS_UPLOAD_TIMEOUT_SECONDS = int(os.getenv("GCS_UPLOAD_TIMEOUT_SECONDS", "3600"))
 GCS_UPLOAD_RETRY_DEADLINE_SECONDS = int(
     os.getenv("GCS_UPLOAD_RETRY_DEADLINE_SECONDS", "7200")
@@ -63,6 +64,155 @@ RAW_TABLE_SCHEMA = [
 ]
 
 
+def get_bruin_vars() -> dict:
+    raw_vars = os.getenv("BRUIN_VARS", "{}")
+    try:
+        return json.loads(raw_vars)
+    except json.JSONDecodeError:
+        logger.warning("Invalid BRUIN_VARS payload. Falling back to defaults.")
+        return {}
+
+
+def get_runtime_value(variable_name: str, env_name: str, default: str) -> str:
+    value = get_bruin_vars().get(variable_name)
+    if value not in (None, ""):
+        return str(value)
+
+    env_value = os.getenv(env_name)
+    if env_value not in (None, ""):
+        return env_value
+
+    return default
+
+
+def get_bruin_gcp_connection() -> dict | None:
+    raw_connection = os.getenv("BRUIN_GCP_CONNECTION", "")
+    if not raw_connection:
+        return None
+
+    try:
+        return json.loads(raw_connection)
+    except json.JSONDecodeError:
+        logger.warning(
+            "Invalid BRUIN_GCP_CONNECTION payload. Falling back to local credentials."
+        )
+        return None
+
+
+def get_gcp_credentials():
+    connection = get_bruin_gcp_connection()
+    if not connection:
+        return None
+
+    service_account_json = connection.get("service_account_json")
+    if service_account_json:
+        service_account_info = (
+            json.loads(service_account_json)
+            if isinstance(service_account_json, str)
+            else service_account_json
+        )
+        return service_account.Credentials.from_service_account_info(
+            service_account_info
+        )
+
+    service_account_file = connection.get("service_account_file")
+    if service_account_file:
+        return service_account.Credentials.from_service_account_file(
+            service_account_file
+        )
+
+    return None
+
+
+def get_project_id() -> str:
+    connection = get_bruin_gcp_connection() or {}
+    return str(
+        connection.get("project_id")
+        or get_runtime_value("gcp_project_id", "GCP_PROJECT_ID", DEFAULT_PROJECT_ID)
+    )
+
+
+def get_bucket_name() -> str:
+    return get_runtime_value("gcs_bucket_name", "GCS_BUCKET_NAME", DEFAULT_BUCKET_NAME)
+
+
+def get_dataset_id() -> str:
+    return get_runtime_value("current_dataset", "BQ_DATASET_ID", DEFAULT_DATASET_ID)
+
+
+def get_region() -> str:
+    connection = get_bruin_gcp_connection() or {}
+    return str(
+        connection.get("location")
+        or get_runtime_value("gcp_region", "GCP_REGION", DEFAULT_REGION)
+    )
+
+
+def build_bigquery_client() -> bigquery.Client:
+    return bigquery.Client(
+        project=get_project_id(),
+        credentials=get_gcp_credentials(),
+        location=get_region(),
+    )
+
+
+def build_storage_client() -> storage.Client:
+    return storage.Client(
+        project=get_project_id(),
+        credentials=get_gcp_credentials(),
+    )
+
+
+def parse_runtime_datetime(raw_value: str | None) -> datetime | None:
+    if not raw_value:
+        return None
+
+    normalized = raw_value.replace("Z", "+00:00")
+    try:
+        if len(raw_value) == 10:
+            return datetime.fromisoformat(raw_value).replace(tzinfo=timezone.utc)
+        return datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+
+
+def derive_hour_window_from_bruin_context() -> tuple[int, int] | None:
+    start_dt = parse_runtime_datetime(
+        os.getenv("BRUIN_START_TIMESTAMP")
+        or os.getenv("BRUIN_START_DATETIME")
+        or os.getenv("BRUIN_START_DATE")
+    )
+    end_dt = parse_runtime_datetime(
+        os.getenv("BRUIN_END_TIMESTAMP")
+        or os.getenv("BRUIN_END_DATETIME")
+        or os.getenv("BRUIN_END_DATE")
+    )
+
+    if not start_dt or not end_dt or end_dt <= start_dt:
+        return None
+
+    if start_dt.date() == end_dt.date():
+        end_exclusive = end_dt.hour
+        if end_dt.minute or end_dt.second or end_dt.microsecond:
+            end_exclusive += 1
+    elif (
+        end_dt.date() == (start_dt + timedelta(days=1)).date()
+        and end_dt.hour == 0
+        and end_dt.minute == 0
+        and end_dt.second == 0
+        and end_dt.microsecond == 0
+    ):
+        end_exclusive = 24
+    else:
+        return None
+
+    count = end_exclusive - start_dt.hour
+    if count < 1 or start_dt.hour + count > 24:
+        return None
+
+    return start_dt.hour, count
+
+
 def resolve_hour_window(
     start_hour: int | None = None, max_hours: int | None = None
 ) -> tuple[int, int]:
@@ -72,16 +222,33 @@ def resolve_hour_window(
       - GH_ARCHIVE_START_HOUR (default: 0)
       - GH_ARCHIVE_MAX_HOURS (default: 24)
     """
-    start = (
-        start_hour
-        if start_hour is not None
-        else int(os.getenv("GH_ARCHIVE_START_HOUR", "0"))
-    )
-    count = (
-        max_hours
-        if max_hours is not None
-        else int(os.getenv("GH_ARCHIVE_MAX_HOURS", "24"))
-    )
+    derived_window = derive_hour_window_from_bruin_context()
+
+    if start_hour is not None:
+        start = start_hour
+    else:
+        configured_start = get_bruin_vars().get("gh_archive_start_hour")
+        if configured_start is None:
+            configured_start = os.getenv("GH_ARCHIVE_START_HOUR")
+        if configured_start is not None:
+            start = int(configured_start)
+        elif derived_window is not None:
+            start = derived_window[0]
+        else:
+            start = 0
+
+    if max_hours is not None:
+        count = max_hours
+    else:
+        configured_count = get_bruin_vars().get("gh_archive_max_hours")
+        if configured_count is None:
+            configured_count = os.getenv("GH_ARCHIVE_MAX_HOURS")
+        if configured_count is not None:
+            count = int(configured_count)
+        elif derived_window is not None:
+            count = derived_window[1]
+        else:
+            count = 24
 
     if start < 0 or start > 23:
         raise ValueError(f"GH_ARCHIVE_START_HOUR must be between 0 and 23, got {start}")
@@ -191,15 +358,16 @@ def fetch_day(
 
 def gcs_object_exists(date: str) -> bool:
     """Check whether a date has any raw objects in GCS (hourly or legacy daily)."""
-    client = storage.Client(project=PROJECT_ID)
-    bucket = client.bucket(BUCKET_NAME)
+    client = build_storage_client()
+    bucket_name = get_bucket_name()
+    bucket = client.bucket(bucket_name)
 
     legacy_blob = bucket.blob(f"raw/github_events/{date}/events.ndjson")
     if legacy_blob.exists(client):
         return True
 
     prefix = f"raw/github_events/{date}/hours/"
-    return any(client.list_blobs(BUCKET_NAME, prefix=prefix, max_results=1))
+    return any(client.list_blobs(bucket_name, prefix=prefix, max_results=1))
 
 
 def gcs_hour_blob_name(date: str, hour: int) -> str:
@@ -207,27 +375,28 @@ def gcs_hour_blob_name(date: str, hour: int) -> str:
 
 
 def gcs_hour_uri(date: str, hour: int) -> str:
-    return f"gs://{BUCKET_NAME}/{gcs_hour_blob_name(date, hour)}"
+    return f"gs://{get_bucket_name()}/{gcs_hour_blob_name(date, hour)}"
 
 
 def gcs_legacy_daily_uri(date: str) -> str:
-    return f"gs://{BUCKET_NAME}/raw/github_events/{date}/events.ndjson"
+    return f"gs://{get_bucket_name()}/raw/github_events/{date}/events.ndjson"
 
 
 def gcs_hourly_wildcard_uri_for_date(date: str) -> str:
-    return f"gs://{BUCKET_NAME}/raw/github_events/{date}/hours/*.ndjson"
+    return f"gs://{get_bucket_name()}/raw/github_events/{date}/hours/*.ndjson"
 
 
 def gcs_hour_object_exists(date: str, hour: int) -> bool:
-    client = storage.Client(project=PROJECT_ID)
-    bucket = client.bucket(BUCKET_NAME)
+    client = build_storage_client()
+    bucket = client.bucket(get_bucket_name())
     return bucket.blob(gcs_hour_blob_name(date, hour)).exists(client)
 
 
 def gcs_any_hour_objects_exist(date: str) -> bool:
-    client = storage.Client(project=PROJECT_ID)
+    client = build_storage_client()
+    bucket_name = get_bucket_name()
     prefix = f"raw/github_events/{date}/hours/"
-    return any(client.list_blobs(BUCKET_NAME, prefix=prefix, max_results=1))
+    return any(client.list_blobs(bucket_name, prefix=prefix, max_results=1))
 
 
 def upload_to_gcs(local_path: str, date: str, hour: int | None = None) -> str:
@@ -241,8 +410,9 @@ def upload_to_gcs(local_path: str, date: str, hour: int | None = None) -> str:
     Returns:
         GCS URI of the uploaded file (gs://bucket/path).
     """
-    client = storage.Client(project=PROJECT_ID)
-    bucket = client.bucket(BUCKET_NAME)
+    client = build_storage_client()
+    bucket_name = get_bucket_name()
+    bucket = client.bucket(bucket_name)
     blob_name = (
         gcs_hour_blob_name(date, hour)
         if hour is not None
@@ -254,7 +424,7 @@ def upload_to_gcs(local_path: str, date: str, hour: int | None = None) -> str:
 
     logger.info(
         "Uploading to gs://%s/%s (chunk_size=%sMB, timeout=%ss)",
-        BUCKET_NAME,
+        bucket_name,
         blob_name,
         GCS_UPLOAD_CHUNK_SIZE_MB,
         GCS_UPLOAD_TIMEOUT_SECONDS,
@@ -266,7 +436,7 @@ def upload_to_gcs(local_path: str, date: str, hour: int | None = None) -> str:
         retry=retry,
     )
 
-    gcs_uri = f"gs://{BUCKET_NAME}/{blob_name}"
+    gcs_uri = f"gs://{bucket_name}/{blob_name}"
     size_mb = Path(local_path).stat().st_size / (1024 * 1024)
     logger.info(f"Uploaded {size_mb:.1f}MB → {gcs_uri}")
     return gcs_uri
@@ -283,7 +453,7 @@ def ensure_table_exists(client: bigquery.Client) -> None:
     Args:
         client: Authenticated BigQuery client.
     """
-    table_ref = f"{PROJECT_ID}.{BQ_DATASET_ID}.{BQ_TABLE_ID}"
+    table_ref = f"{get_project_id()}.{get_dataset_id()}.{BQ_TABLE_ID}"
     try:
         client.get_table(table_ref)
         logger.info(f"Table already exists: {table_ref}")
@@ -328,10 +498,10 @@ def load_to_bigquery(gcs_uri: str, date: str) -> int:
     Returns:
         Number of rows loaded.
     """
-    client = bigquery.Client(project=PROJECT_ID)
+    client = build_bigquery_client()
     ensure_table_exists(client)
 
-    table_ref = f"{PROJECT_ID}.{BQ_DATASET_ID}.{BQ_TABLE_ID}"
+    table_ref = f"{get_project_id()}.{get_dataset_id()}.{BQ_TABLE_ID}"
 
     rows_deleted = delete_date_from_bigquery(client, table_ref, date)
     logger.info(f"Deleted {rows_deleted:,} existing rows for {date} from {table_ref}")
@@ -523,10 +693,10 @@ def main() -> None:
 
     date = resolve_date(args.date or os.getenv("GITHUB_ARCHIVE_DATE"))
 
-    if not PROJECT_ID:
+    if not get_project_id():
         logger.error("GCP_PROJECT_ID environment variable is required")
         sys.exit(1)
-    if not BUCKET_NAME:
+    if not get_bucket_name():
         logger.error("GCS_BUCKET_NAME environment variable is required")
         sys.exit(1)
 

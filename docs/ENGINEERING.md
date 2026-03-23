@@ -362,10 +362,14 @@ if gcs_hour_object_exists(f"{date}/{hour}"):
 
 ## Next Steps (If Scaling to Production)
 
+> **None of the items below were implemented.** This section documents potential future improvements for a production-grade system. The project is a learning/submission pipeline and intentionally stops here.
+
 1. **Bruin Cloud**
-   - Migrate from self-managed CLI + GitHub Actions to [Bruin Cloud](https://cloud.getbruin.com/register) for a fully managed experience
-   - Bruin Cloud adds: automatic scheduling, a web-based run monitor, interactive column-level lineage, table/column health checks UI, cost & usage reports, and managed secrets — all connected directly to this Git repo
-   - The pipeline YAML and assets require no changes; Bruin Cloud reads the existing `pipeline.yml` and `bruin/` directory as-is
+    - **Partially validated:** Bruin Cloud was connected successfully (GitHub repo + `bigquery-default` GCP connection), and runs can be triggered from local CLI via `bruin cloud runs trigger`.
+    - **Current blocker:** Triggered runs remained in `queued` state in this team/workspace and did not transition to `running`, so end-to-end managed execution is not yet verified.
+    - **What is verified today:** direct local CLI execution works end-to-end, including one-hour smoke runs (`GH_ARCHIVE_START_HOUR=0`, `GH_ARCHIVE_MAX_HOURS=1`).
+   - Bruin Cloud adds: automatic scheduling, a web-based run monitor, interactive column-level lineage, table/column health checks UI, cost & usage reports, and managed secrets — all connected directly to this Git repo.
+    - Next validation step: push latest pipeline changes, trigger again, and confirm `queued -> running -> succeeded`.
 
 2. **Alerting & SLOs**
    - Export data quality check results to Cloud Logging
@@ -393,7 +397,7 @@ if gcs_hour_object_exists(f"{date}/{hour}"):
 
 ## Related Files
 
-- [Bruin Pipeline YAML](./bruin/pipeline.yml)
-- [Terraform Infrastructure](./terraform/main.tf)
-- [Ingestion Tests](./tests/test_ingest_github_events.py)
-- [Pipeline Validation Tests](./tests/test_bruin_pipeline.py)
+- [Bruin Pipeline YAML](../bruin/pipeline.yml)
+- [Terraform Infrastructure](../terraform/main.tf)
+- [Ingestion Tests](../tests/test_ingest_github_events.py)
+- [Pipeline Validation Tests](../tests/test_bruin_pipeline.py)

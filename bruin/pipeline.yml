@@ -13,3 +13,6 @@ variables:
   current_dataset:
     type: string
     default: "dev_gh_analytics"
+  gcs_bucket_name:
+    type: string
+    default: "gh-dezoomcamp-raw-events"
