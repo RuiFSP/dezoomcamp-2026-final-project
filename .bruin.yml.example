@@ -13,6 +13,10 @@ environments:
           project_id: "${GCP_PROJECT_ID}"
           location: "${GCP_REGION}"
           use_application_default_credentials: true
+      # Bruin Cloud connection (optional - required for bruin cloud CLI commands)
+      bruin:
+        - name: "cloud"
+          api_token: "${BRUIN_CLOUD_API_KEY}"
 
   staging:
     schema_prefix: "stg_"
@@ -22,6 +26,9 @@ environments:
           project_id: "${GCP_PROJECT_ID}"
           location: "${GCP_REGION}"
           use_application_default_credentials: true
+      bruin:
+        - name: "cloud"
+          api_token: "${BRUIN_CLOUD_API_KEY}"
 
   prod:
     connections:
@@ -30,3 +37,6 @@ environments:
           project_id: "${GCP_PROJECT_ID}"
           location: "${GCP_REGION}"
           use_application_default_credentials: true
+      bruin:
+        - name: "cloud"
+          api_token: "${BRUIN_CLOUD_API_KEY}"

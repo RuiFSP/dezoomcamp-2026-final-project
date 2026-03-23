@@ -86,6 +86,8 @@ def test_pipeline_has_variables(pipeline_yaml):
     assert "variables" in pipeline_yaml
     assert "current_dataset" in pipeline_yaml["variables"]
     assert pipeline_yaml["variables"]["current_dataset"]["type"] == "string"
+    assert "gcs_bucket_name" in pipeline_yaml["variables"]
+    assert pipeline_yaml["variables"]["gcs_bucket_name"]["type"] == "string"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
